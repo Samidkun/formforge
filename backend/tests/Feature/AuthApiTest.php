@@ -82,4 +82,19 @@ class AuthApiTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.email', $user->email);
     }
+
+    // Ruling T6-2: the 403 handler (AuthorizationException /
+    // AccessDeniedHttpException) in bootstrap/app.php had no test. The test-only
+    // route registered under environment('testing') in routes/api.php throws
+    // AuthorizationException; assert the exact envelope contract.
+    public function test_forbidden_returns_envelope(): void
+    {
+        $res = $this->getJson('/api/_test/forbidden');
+        $res->assertStatus(403)
+            ->assertExactJson([
+                'success' => false,
+                'error'   => ['code' => 'FORBIDDEN', 'message' => 'This action is unauthorized.'],
+                'meta'    => [],
+            ]);
+    }
 }

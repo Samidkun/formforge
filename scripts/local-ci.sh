@@ -45,10 +45,16 @@ while [ $# -gt 0 ]; do
 done
 TIER="$(echo "$TIER" | tr '[:upper:]' '[:lower:]')"
 
-# ---------- stack detection (same rule as bootstrap.sh) ----------
+# ---------- stack detection (monorepo-aware) ----------
+# Ruling T6-1: this repo is a monorepo — the Laravel app lives in backend/, so a
+# root-only `[ -f composer.json ]` check left IS_PHP=0 and the php gate never ran
+# (local-ci printed ALL GREEN with 32 tests unrun). Detect composer.json in the
+# root first, else in backend/. PHP_DIR is the directory the php gates run from.
 IS_NODE=0; IS_PHP=0; IS_PY=0
+PHP_DIR="."
 [ -f package.json ] && IS_NODE=1
-[ -f composer.json ] && IS_PHP=1
+if [ -f composer.json ]; then IS_PHP=1; PHP_DIR="."
+elif [ -f backend/composer.json ]; then IS_PHP=1; PHP_DIR="backend"; fi
 { [ -f pyproject.toml ] || [ -f requirements.txt ]; } && IS_PY=1
 
 RESULTS=()
@@ -124,12 +130,14 @@ if [ "$IS_NODE" = 1 ]; then
 fi
 
 if [ "$IS_PHP" = 1 ]; then
-  if [ -f artisan ]; then
-    gate "php:test"  "" php artisan test
+  # Run from $PHP_DIR (backend/ in this monorepo) — not root, where there is no
+  # artisan/composer.json. `gate` runs the command via "$@", so wrap in a subshell.
+  if [ -f "$PHP_DIR/artisan" ]; then
+    gate "php:test"  "" bash -c "cd '$PHP_DIR' && php artisan test"
   else
-    gate "php:test"  "$([ -x vendor/bin/phpunit ] || echo 'no phpunit')" ./vendor/bin/phpunit
+    gate "php:test"  "$([ -x "$PHP_DIR/vendor/bin/phpunit" ] || echo 'no phpunit')" bash -c "cd '$PHP_DIR' && ./vendor/bin/phpunit"
   fi
-  gate "php:audit" "$(have composer || echo 'composer missing')" composer audit --no-interaction
+  gate "php:audit" "$(have composer || echo 'composer missing')" bash -c "cd '$PHP_DIR' && composer audit --no-interaction"
 fi
 
 if [ "$IS_PY" = 1 ]; then

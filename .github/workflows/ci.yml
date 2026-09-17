@@ -42,7 +42,13 @@ jobs:
 
   php:
     runs-on: ubuntu-latest
-    if: hashFiles('composer.json') != ''
+    # Monorepo (ruling T6-1): the Laravel app lives in backend/, so detect
+    # backend/composer.json — a root-only hashFiles('composer.json') left this
+    # job skipped in CI, mirroring the dead local-ci gate.
+    if: hashFiles('backend/composer.json') != ''
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
