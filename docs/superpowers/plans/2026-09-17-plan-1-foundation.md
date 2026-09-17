@@ -417,7 +417,7 @@ class FormSchemaTest extends TestCase
 > terproteksi; (b) bound bawah rating `< 1` belum teruji (T3-1 baru menutup `> 5`); (c) keempat
 > string pesan error tak pernah di-assert (semua pakai `assertArrayHasKey`, mutasi pesan → tetap
 > hijau); (d) `type` non-string (mis. array) melempar `TypeError`, bukan `InvalidArgumentException`
-> sesuai kontrak. Test 10–13 + guard `!is_string($f['type'])` di Step 4 menutup keempatnya.
+> sesuai kontrak. Tiga test baru (total suite 12) + guard `!is_string($f['type'])` di Step 4 menutup keempatnya.
 
 - [ ] **Step 2: Run, verifikasi GAGAL**
 
