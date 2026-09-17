@@ -650,7 +650,10 @@ class WorkspaceTest extends TestCase
         Workspace::create(['owner_id' => $user->id, 'name' => 'Toko B']);
 
         $this->assertCount(2, $user->fresh()->workspaces);
-        $this->assertSame('Toko A', $user->workspaces->first()->name);
+        $this->assertSame(
+            'Toko A',
+            $user->workspaces()->orderBy('created_at')->orderBy('name')->first()->name
+        );
     }
 
     public function test_workspace_belongs_to_owner(): void
@@ -744,6 +747,12 @@ public function workspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
 
 Run: `php artisan migrate --force && php artisan test --filter=WorkspaceTest`
 Expected: PASS (3 test).
+
+> **Catatan controller (Ruling T4-3 — determinisme test):** review T4 menandai
+> `test_user_can_own_many_workspaces` meng-assert urutan lewat `->first()` **tanpa `orderBy`** —
+> urutan heap Postgres bersifat insidental, jadi test itu **latent flake** (bisa hijau/merah acak di
+> data besar). Flaky test merusak sinyal hijau yang jadi fondasi metodologi ini, maka ini diperbaiki
+> (bukan sekadar kosmetik): query eksplisit `->orderBy('created_at')->orderBy('name')`.
 
 - [ ] **Step 6: Commit**
 
