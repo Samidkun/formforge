@@ -52,7 +52,7 @@ services:
       POSTGRES_PASSWORD: devpass
       POSTGRES_DB: formforge
     ports: ["5433:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+    volumes: ["pgdata:/var/lib/postgresql"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U formforge -d formforge"]
       interval: 3s
