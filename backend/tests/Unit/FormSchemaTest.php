@@ -72,4 +72,13 @@ class FormSchemaTest extends TestCase
         $s = FormSchema::fromArray($this->validSchema());
         $this->assertSame(['f_1', 'f_2', 'f_3'], $s->fieldKeys());
     }
+
+    public function test_rating_out_of_range_is_an_error(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'rating', 'label' => 'Nilai', 'required' => false],
+        ]]);
+        $this->assertArrayHasKey('f_1', $s->validateAnswers(['f_1' => 9]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 3]));
+    }
 }
