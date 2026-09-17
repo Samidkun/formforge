@@ -367,8 +367,42 @@ class FormSchemaTest extends TestCase
         $s = FormSchema::fromArray(['fields' => [
             ['key' => 'f_1', 'type' => 'rating', 'label' => 'Nilai', 'required' => false],
         ]]);
-        $this->assertArrayHasKey('f_1', $s->validateAnswers(['f_1' => 9]));
-        $this->assertSame([], $s->validateAnswers(['f_1' => 3]));
+        $this->assertSame(['f_1' => 'Rating harus 1-5'], $s->validateAnswers(['f_1' => 9]));
+        $this->assertSame(['f_1' => 'Rating harus 1-5'], $s->validateAnswers(['f_1' => 0]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 1]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 5]));
+    }
+
+    public function test_number_type_rejects_non_numeric_value(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'number', 'label' => 'Jumlah', 'required' => false],
+        ]]);
+        $this->assertSame(['f_1' => 'Harus berupa angka'], $s->validateAnswers(['f_1' => 'abc']));
+        $this->assertSame([], $s->validateAnswers(['f_1' => '7']));
+    }
+
+    public function test_error_messages_are_exact_strings(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'text',   'label' => 'Nama',   'required' => true],
+            ['key' => 'f_2', 'type' => 'email',  'label' => 'Email',  'required' => false],
+            ['key' => 'f_3', 'type' => 'number', 'label' => 'Jumlah', 'required' => false],
+            ['key' => 'f_4', 'type' => 'rating', 'label' => 'Nilai',  'required' => false],
+        ]]);
+        $errors = $s->validateAnswers(['f_2' => 'nope', 'f_3' => 'abc', 'f_4' => 9]);
+        $this->assertSame('Wajib diisi', $errors['f_1']);
+        $this->assertSame('Format email tidak valid', $errors['f_2']);
+        $this->assertSame('Harus berupa angka', $errors['f_3']);
+        $this->assertSame('Rating harus 1-5', $errors['f_4']);
+    }
+
+    public function test_rejects_non_string_field_type(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => ['text'], 'label' => 'X', 'required' => false],
+        ]]);
     }
 }
 ```
@@ -377,6 +411,13 @@ class FormSchemaTest extends TestCase
 > karena Step 6 (mutation check) awalnya tidak bisa gagal — tak ada test yang mengeksekusi cabang
 > rating, sehingga `$n < 1 || $n > 5` bisa diganti `false` tanpa memerahkan suite. Test ini menutup
 > cabang itu agar mutation check di Step 6 benar-benar load-bearing.
+>
+> **Catatan controller (Ruling T3-2):** review task-3 memutasi SETIAP rule dan menemukan 4 gap
+> coverage yang sama kelasnya dengan T3-1: (a) rule `number` nol test — branch live tapi tak
+> terproteksi; (b) bound bawah rating `< 1` belum teruji (T3-1 baru menutup `> 5`); (c) keempat
+> string pesan error tak pernah di-assert (semua pakai `assertArrayHasKey`, mutasi pesan → tetap
+> hijau); (d) `type` non-string (mis. array) melempar `TypeError`, bukan `InvalidArgumentException`
+> sesuai kontrak. Test 10–13 + guard `!is_string($f['type'])` di Step 4 menutup keempatnya.
 
 - [ ] **Step 2: Run, verifikasi GAGAL**
 
@@ -432,8 +473,8 @@ class FormSchema
             }
             $seen[$f['key']] = true;
 
-            if (!isset($f['type']) || FieldType::tryFrom($f['type']) === null) {
-                throw new \InvalidArgumentException("Unknown field type: " . ($f['type'] ?? 'null'));
+            if (!isset($f['type']) || !is_string($f['type']) || FieldType::tryFrom($f['type']) === null) {
+                throw new \InvalidArgumentException("Unknown field type: " . (is_scalar($f['type'] ?? null) ? $f['type'] : gettype($f['type'] ?? null)));
             }
             if (!isset($f['label']) || !is_string($f['label']) || trim($f['label']) === '') {
                 throw new \InvalidArgumentException("Field {$f['key']} needs a non-empty label.");
