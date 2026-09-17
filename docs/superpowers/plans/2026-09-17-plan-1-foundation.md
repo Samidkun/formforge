@@ -797,9 +797,11 @@ class AuthApiTest extends TestCase
             'password' => 'rahasia123', 'password_confirmation' => 'rahasia123',
         ]);
         $res->assertStatus(201)->assertJsonPath('success', true);
+        $this->assertNotEmpty($res->json('data.token'));
         $user = User::where('email', 'samid@example.com')->first();
         $this->assertNotNull($user);
         $this->assertCount(1, $user->workspaces);
+        $this->assertSame('Samid Workspace', $user->workspaces->first()->name);
     }
 
     public function test_register_rejects_duplicate_email(): void
@@ -808,7 +810,8 @@ class AuthApiTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'X', 'email' => 'samid@example.com',
             'password' => 'rahasia123', 'password_confirmation' => 'rahasia123',
-        ])->assertStatus(422)->assertJsonPath('success', false);
+        ])->assertStatus(422)->assertJsonPath('success', false)
+          ->assertJsonPath('error.code', 'VALIDATION_ERROR');
     }
 
     public function test_login_returns_token(): void
@@ -831,12 +834,14 @@ class AuthApiTest extends TestCase
         ]);
         $this->postJson('/api/login', [
             'email' => 'samid@example.com', 'password' => 'salah',
-        ])->assertStatus(422);
+        ])->assertStatus(422)->assertJsonPath('success', false)
+          ->assertJsonPath('error.code', 'INVALID_CREDENTIALS');
     }
 
     public function test_me_requires_auth(): void
     {
-        $this->getJson('/api/me')->assertStatus(401)->assertJsonPath('success', false);
+        $this->getJson('/api/me')->assertStatus(401)->assertJsonPath('success', false)
+             ->assertJsonPath('error.code', 'UNAUTHENTICATED');
     }
 
     public function test_me_returns_user_with_token(): void
@@ -854,10 +859,18 @@ class AuthApiTest extends TestCase
         $this->postJson('/api/login', ['email' => 'bukan-email', 'password' => 'x'])
             ->assertStatus(422)
             ->assertJsonPath('success', false)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
             ->assertJsonStructure(['success', 'error' => ['code', 'message'], 'meta']);
     }
 }
 ```
+
+> **Catatan controller (Ruling T5-3 — assertion nilai kontrak):** review task-5 memutasi SETIAP
+> nilai kontrak dan menemukan semuanya **tak ter-assert** (mutasi tetap hijau): `error.code`
+> (`INVALID_CREDENTIALS`, `VALIDATION_ERROR`, `UNAUTHENTICATED`), nama workspace default
+> `"<name> Workspace"`, dan token register. Controller reproduksi sendiri: 4 mutasi → semua 7 passed.
+> Ini kelas gap yang sama dengan T3-2 (nilai kontrak tak di-assert). Test di atas kini meng-assert
+> **nilai**-nya, bukan cuma keberadaannya, agar mutasi tersebut memerahkan suite.
 
 > **Catatan controller (Ruling T5-1 — envelope konsistensi):** spec §3.4 menetapkan
 > "Envelope seragam: `{success, data|error, meta}`" untuk SEMUA endpoint. Brief literal menutup
