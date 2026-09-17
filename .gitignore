@@ -1,0 +1,7 @@
+.env
+.devdata/
+node_modules/
+vendor/
+.next/
+dist/
+__pycache__/
