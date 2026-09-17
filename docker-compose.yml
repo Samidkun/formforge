@@ -1,0 +1,27 @@
+# docker-compose.yml
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: formforge
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: formforge
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formforge -d formforge"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  cache:
+    image: redis:7-alpine
+    ports: ["6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
