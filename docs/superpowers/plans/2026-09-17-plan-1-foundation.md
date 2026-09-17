@@ -836,7 +836,7 @@ class AuthApiTest extends TestCase
 
     public function test_me_requires_auth(): void
     {
-        $this->getJson('/api/me')->assertStatus(401);
+        $this->getJson('/api/me')->assertStatus(401)->assertJsonPath('success', false);
     }
 
     public function test_me_returns_user_with_token(): void
@@ -848,8 +848,29 @@ class AuthApiTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.email', $user->email);
     }
+
+    public function test_login_validation_error_uses_envelope(): void
+    {
+        $this->postJson('/api/login', ['email' => 'bukan-email', 'password' => 'x'])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure(['success', 'error' => ['code', 'message'], 'meta']);
+    }
 }
 ```
+
+> **Catatan controller (Ruling T5-1 — envelope konsistensi):** spec §3.4 menetapkan
+> "Envelope seragam: `{success, data|error, meta}`" untuk SEMUA endpoint. Brief literal menutup
+> validation error register (`failedValidation` override) tapi **login** masih memakai
+> `$r->validate(...)` mentah → body error-nya `{message, errors}` tanpa `success`, inkonsisten.
+> Fix: login juga harus mengembalikan envelope. (Kelas gap yang sama dengan T3-2: sibling branch
+> kelewat saat satu branch diperbaiki.)
+>
+> **Catatan controller (Ruling T5-2 — 401 envelope):** `GET /api/me` tanpa token saat ini
+> mengembalikan body raw `{message:"Unauthenticated."}` (middleware Laravel default), **melanggar**
+> spec envelope seragam. Test lama hanya cek status 401, bukan bentuk body → gap tak tertangkap.
+> Fix: exception handler harus membungkus 401 (dan 403) ke envelope `{success:false, error:{...}, meta:{}}`
+> lewat `bootstrap/app.php` (`withExceptions`), dan test 401 harus meng-assert `success=false`.
 
 - [ ] **Step 2: Run, verifikasi GAGAL**
 
