@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use App\Models\Workspace;
@@ -33,9 +34,8 @@ class AuthController extends Controller
         return $this->envelope(['user' => $user, 'token' => $token], 201);
     }
 
-    public function login(Request $r)
+    public function login(LoginRequest $r)
     {
-        $r->validate(['email' => ['required','email'], 'password' => ['required','string']]);
         $user = User::where('email', $r->email)->first();
         if (!$user || !Hash::check($r->password, $user->password)) {
             return response()->json([

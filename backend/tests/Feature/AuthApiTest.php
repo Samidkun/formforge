@@ -56,7 +56,17 @@ class AuthApiTest extends TestCase
 
     public function test_me_requires_auth(): void
     {
-        $this->getJson('/api/me')->assertStatus(401);
+        $this->getJson('/api/me')
+            ->assertStatus(401)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_login_validation_error_uses_envelope(): void
+    {
+        $this->postJson('/api/login', ['email' => 'bukan-email', 'password' => 'x'])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure(['success', 'error' => ['code', 'message'], 'meta']);
     }
 
     public function test_me_returns_user_with_token(): void
