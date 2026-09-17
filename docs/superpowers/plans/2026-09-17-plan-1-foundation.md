@@ -440,8 +440,32 @@ class FormSchemaTest extends TestCase
             ['key' => 'f_1', 'type' => 'text', 'label' => '   ', 'required' => false],
         ]]);
     }
+
+    public function test_rejects_non_string_key(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 123, 'type' => 'text', 'label' => 'X', 'required' => false],
+        ]]);
+    }
+
+    public function test_rejects_non_string_label(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'text', 'label' => ['x'], 'required' => false],
+        ]]);
+    }
 }
 ```
+
+> **Catatan controller (Ruling T3-3b — sweep terakhir):** enumerasi SEMUA operand guard di `fromArray`
+> menunjukkan 2 guard `!is_string` terakhir (`$f['key']`, `$f['label']`) masih real tapi nol coverage
+> (hapusnya → `TypeError` bocor, bukan `InvalidArgumentException`). Test 18–19 menutupnya. Tiga operand
+> `!isset($f['key'|'type'|'label'])` bersifat **redundan/dead** — operand `!is_string` sibling sudah
+> menangkap kasus yang sama, jadi tak ada test yang bisa (atau perlu) menutupnya. Setelah 19 test ini,
+> setiap guard yang *reachable dan non-redundan* di `FormSchema` punya test yang bisa gagal:
+> **coverage-complete, sweep ditutup.**
 
 > **Catatan controller (Ruling T3-3):** re-review menemukan 4 guard saudara yang masih nol coverage
 > (kelas hole yang sama): `!isset($f['type'])`, key kosong/non-string, `fields` hilang/non-array, dan
