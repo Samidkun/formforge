@@ -404,8 +404,50 @@ class FormSchemaTest extends TestCase
             ['key' => 'f_1', 'type' => ['text'], 'label' => 'X', 'required' => false],
         ]]);
     }
+
+    public function test_rejects_missing_or_non_array_fields(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray([]);
+    }
+
+    public function test_rejects_non_array_fields_value(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => 'nope']);
+    }
+
+    public function test_rejects_missing_field_type(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'label' => 'X', 'required' => false],
+        ]]);
+    }
+
+    public function test_rejects_empty_or_non_string_key(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => '', 'type' => 'text', 'label' => 'X', 'required' => false],
+        ]]);
+    }
+
+    public function test_rejects_whitespace_only_label(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'text', 'label' => '   ', 'required' => false],
+        ]]);
+    }
 }
 ```
+
+> **Catatan controller (Ruling T3-3):** re-review menemukan 4 guard saudara yang masih nol coverage
+> (kelas hole yang sama): `!isset($f['type'])`, key kosong/non-string, `fields` hilang/non-array, dan
+> `trim($f['label']) === ''` (label whitespace-only). Test 13–17 menutup semuanya **exhaustive** —
+> setiap guard di `fromArray` kini punya test yang bisa gagal. Ini sweep final; setelah ini FormSchema
+> dinyatakan coverage-complete dan re-review berfokus verifikasi, bukan berburu gap tanpa batas.
 
 > **Catatan controller (Ruling T3-1):** test ke-9 (`test_rating_out_of_range_is_an_error`) ditambahkan
 > karena Step 6 (mutation check) awalnya tidak bisa gagal — tak ada test yang mengeksekusi cabang
