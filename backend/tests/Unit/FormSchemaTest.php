@@ -151,4 +151,20 @@ class FormSchemaTest extends TestCase
             ['key' => 'f_1', 'type' => 'text', 'label' => '   ', 'required' => false],
         ]]);
     }
+
+    public function test_rejects_non_string_key(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 123, 'type' => 'text', 'label' => 'X', 'required' => false],
+        ]]);
+    }
+
+    public function test_rejects_non_string_label(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'text', 'label' => ['x'], 'required' => false],
+        ]]);
+    }
 }
