@@ -151,7 +151,7 @@ git commit -m "chore: add docker compose for postgres 18 + redis 7"
 Run:
 ```bash
 cd /mnt/data/01_Projects/Porto/formforge
-composer create-project laravel/laravel backend --no-interaction 2>&1 | tail -20
+composer create-project laravel/laravel:^12.0 backend --no-interaction 2>&1 | tail -20
 ```
 Expected: berakhir dengan "Application ready!" TANPA baris `error`. Kalau ada `error`, berhenti dan baca.
 
