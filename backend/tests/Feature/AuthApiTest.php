@@ -20,6 +20,8 @@ class AuthApiTest extends TestCase
         $user = User::where('email', 'samid@example.com')->first();
         $this->assertNotNull($user);
         $this->assertCount(1, $user->workspaces);
+        $this->assertNotEmpty($res->json('data.token'));
+        $this->assertSame('Samid Workspace', $user->workspaces->first()->name);
     }
 
     public function test_register_rejects_duplicate_email(): void
@@ -28,7 +30,7 @@ class AuthApiTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'X', 'email' => 'samid@example.com',
             'password' => 'rahasia123', 'password_confirmation' => 'rahasia123',
-        ])->assertStatus(422)->assertJsonPath('success', false);
+        ])->assertStatus(422)->assertJsonPath('success', false)->assertJsonPath('error.code', 'VALIDATION_ERROR');
     }
 
     public function test_login_returns_token(): void
@@ -51,14 +53,15 @@ class AuthApiTest extends TestCase
         ]);
         $this->postJson('/api/login', [
             'email' => 'samid@example.com', 'password' => 'salah',
-        ])->assertStatus(422);
+        ])->assertStatus(422)->assertJsonPath('success', false)->assertJsonPath('error.code', 'INVALID_CREDENTIALS');
     }
 
     public function test_me_requires_auth(): void
     {
         $this->getJson('/api/me')
             ->assertStatus(401)
-            ->assertJsonPath('success', false);
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error.code', 'UNAUTHENTICATED');
     }
 
     public function test_login_validation_error_uses_envelope(): void
@@ -66,6 +69,7 @@ class AuthApiTest extends TestCase
         $this->postJson('/api/login', ['email' => 'bukan-email', 'password' => 'x'])
             ->assertStatus(422)
             ->assertJsonPath('success', false)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR')
             ->assertJsonStructure(['success', 'error' => ['code', 'message'], 'meta']);
     }
 
