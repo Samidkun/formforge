@@ -18,7 +18,10 @@ class WorkspaceTest extends TestCase
         Workspace::create(['owner_id' => $user->id, 'name' => 'Toko B']);
 
         $this->assertCount(2, $user->fresh()->workspaces);
-        $this->assertSame('Toko A', $user->workspaces->first()->name);
+        $this->assertSame(
+            'Toko A',
+            $user->workspaces()->orderBy('created_at')->orderBy('name')->first()->name
+        );
     }
 
     public function test_workspace_belongs_to_owner(): void
