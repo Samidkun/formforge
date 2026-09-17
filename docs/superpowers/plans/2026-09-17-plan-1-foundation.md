@@ -625,7 +625,7 @@ git commit -m "feat(backend): add FormSchema value object with validation"
 
 **Interfaces:**
 - Consumes: `users` (bawaan Laravel).
-- Produces: tabel `workspaces(id uuid, owner_id uuid FK users, name, timestamps)`; `Workspace` model dengan relasi `owner()` (belongsTo User) dan `User::workspaces()` (hasMany). UUID v4 via `gen_random_uuid()`.
+- Produces: tabel `workspaces(id uuid, owner_id FK users, name, timestamps)`; `Workspace` model dengan relasi `owner()` (belongsTo User) dan `User::workspaces()` (hasMany). UUID v4 via `gen_random_uuid()`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
@@ -691,7 +691,7 @@ return new class extends Migration {
     {
         Schema::create('workspaces', function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
-            $table->foreignUuid('owner_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->timestamps();
             $table->index('owner_id');
@@ -727,6 +727,18 @@ public function workspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
     return $this->hasMany(\App\Models\Workspace::class, 'owner_id');
 }
 ```
+
+> **Catatan controller (Ruling T4-1 — plan defect):** brief semula menulis `foreignUuid('owner_id')`,
+> tapi `users.id` adalah `bigint` bawaan Laravel (`$table->id()`) → Postgres menolak FK
+> ("incompatible types: uuid and bigint"), dan test maupun Task 5 memakai `owner_id => $user->id`
+> (bigint). Maka `owner_id` harus `foreignId` (bigint), bukan uuid. `id` workspace tetap
+> `uuid DEFAULT gen_random_uuid()`.
+>
+> **Catatan controller (Ruling T4-2 — UUID version):** prose "UUID v4" tidak akurat untuk jalur
+> penulisan: kolom `id` punya default DB `gen_random_uuid()` (v4) tapi itu **tak terpakai** karena
+> `HasUuids` (Laravel 12) men-generate **v7** di sisi klien. Test memakai regex version-agnostic,
+> jadi tidak ada yang pecah. v7 (time-ordered) justru lebih baik untuk indeks. Kalau v4 ketat
+> diwajibkan, ganti ke `HasVersion4Uuids` — tapi itu **bukan** keputusan default di sini.
 
 - [ ] **Step 5: Jalankan migrasi + test**
 
