@@ -361,8 +361,22 @@ class FormSchemaTest extends TestCase
         $s = FormSchema::fromArray($this->validSchema());
         $this->assertSame(['f_1', 'f_2', 'f_3'], $s->fieldKeys());
     }
+
+    public function test_rating_out_of_range_is_an_error(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'rating', 'label' => 'Nilai', 'required' => false],
+        ]]);
+        $this->assertArrayHasKey('f_1', $s->validateAnswers(['f_1' => 9]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 3]));
+    }
 }
 ```
+
+> **Catatan controller (Ruling T3-1):** test ke-9 (`test_rating_out_of_range_is_an_error`) ditambahkan
+> karena Step 6 (mutation check) awalnya tidak bisa gagal — tak ada test yang mengeksekusi cabang
+> rating, sehingga `$n < 1 || $n > 5` bisa diganti `false` tanpa memerahkan suite. Test ini menutup
+> cabang itu agar mutation check di Step 6 benar-benar load-bearing.
 
 - [ ] **Step 2: Run, verifikasi GAGAL**
 
