@@ -5,3 +5,5 @@ vendor/
 .next/
 dist/
 __pycache__/
+.worktrees/
+.superpowers/
