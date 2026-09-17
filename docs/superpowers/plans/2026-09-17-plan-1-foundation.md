@@ -17,6 +17,10 @@
 - **Port (host):** Postgres `5433`, Redis `6380`.
 - **Nama DB/user/pass dev:** `formforge` / `formforge` / `devpass`.
 - **Auth:** multi-user (register/login), tiap user punya workspace.
+- **DB test:** test memakai Postgres (bukan sqlite — ekstensi sqlite TIDAK ADA di
+  mesin ini). Database test: `formforge_test`. Override di `backend/phpunit.xml`.
+- **Redis client:** `predis/predis` + `REDIS_CLIENT=predis` (ekstensi phpredis
+  TIDAK ADA di mesin ini).
 - **Skema form disimpan JSONB**, field key berformat `f_<n>`.
 - **Semua endpoint API pakai envelope:** `{success, data|error, meta}`.
 - **Tidak ada secret plaintext.** `.env` di-gitignore; `.env.example` di-commit.
@@ -72,15 +76,25 @@ volumes:
 
 ```bash
 #!/usr/bin/env bash
-# scripts/wait-for-db.sh — keluar 0 hanya setelah Postgres siap.
+# scripts/wait-for-db.sh — keluar 0 hanya setelah Postgres siap,
+# lalu pastikan database test `formforge_test` ada.
 set -euo pipefail
 for i in $(seq 1 40); do
   if docker compose exec -T db pg_isready -U formforge -d formforge >/dev/null 2>&1; then
-    echo "db ready after ${i} attempt(s)"; exit 0
+    echo "db ready after ${i} attempt(s)"
+    break
   fi
   sleep 2
 done
-echo "db NOT ready after 40 attempts" >&2; exit 1
+
+# DB test terpisah (test TIDAK boleh jalan di DB dev).
+if ! docker compose exec -T db psql -U formforge -d postgres -tAc \
+      "SELECT 1 FROM pg_database WHERE datname='formforge_test'" | grep -q 1; then
+  docker compose exec -T db psql -U formforge -d postgres -c "CREATE DATABASE formforge_test"
+  echo "created database formforge_test"
+else
+  echo "database formforge_test already exists"
+fi
 ```
 
 - [ ] **Step 3: Jalankan dan verifikasi (bukti nyata)**
@@ -203,7 +217,9 @@ use App\Http\Controllers\HealthController;
 Route::get('/health', HealthController::class);
 ```
 
-- [ ] **Step 5: Set `.env` backend ke container, lalu run test**
+- [ ] **Step 5: Set `.env` + `phpunit.xml` ke container, install predis, run test**
+
+Ekstensi PHP `redis` dan `sqlite` TIDAK ADA di mesin ini, jadi:
 
 ```
 # backend/.env
@@ -213,11 +229,35 @@ DB_PORT=5433
 DB_DATABASE=formforge
 DB_USERNAME=formforge
 DB_PASSWORD=devpass
+REDIS_CLIENT=predis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6380
 ```
+
+Test memakai Postgres (bukan sqlite). Edit `backend/phpunit.xml` — di dalam
+`<php>` tambahkan/ganti blok `<env>` berikut:
+
+```xml
+<env name="DB_CONNECTION" value="pgsql"/>
+<env name="DB_HOST" value="127.0.0.1"/>
+<env name="DB_PORT" value="5433"/>
+<env name="DB_DATABASE" value="formforge_test"/>
+<env name="DB_USERNAME" value="formforge"/>
+<env name="DB_PASSWORD" value="devpass"/>
+<env name="REDIS_CLIENT" value="predis"/>
+<env name="CACHE_STORE" value="array"/>
+<env name="QUEUE_CONNECTION" value="sync"/>
+```
+
+Install klien Redis PHP murni (ekstensi phpredis tidak ada):
+
+```bash
+cd backend && composer require predis/predis --no-interaction 2>&1 | tail -5
+```
+
 Run: `php artisan test --filter=HealthTest`
-Expected: PASS (2 assertion hijau).
+Expected: PASS (assertion hijau). Kalau gagal karena DB, pastikan
+`bash scripts/wait-for-db.sh` sudah dijalankan (Task 1 Step 2 membuat `formforge_test`).
 
 - [ ] **Step 6: Commit**
 
