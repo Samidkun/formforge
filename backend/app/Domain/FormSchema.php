@@ -23,8 +23,8 @@ class FormSchema
             }
             $seen[$f['key']] = true;
 
-            if (!isset($f['type']) || FieldType::tryFrom($f['type']) === null) {
-                throw new \InvalidArgumentException("Unknown field type: " . ($f['type'] ?? 'null'));
+            if (!isset($f['type']) || !is_string($f['type']) || FieldType::tryFrom($f['type']) === null) {
+                throw new \InvalidArgumentException("Unknown field type: " . (is_scalar($f['type'] ?? null) ? $f['type'] : gettype($f['type'] ?? null)));
             }
             if (!isset($f['label']) || !is_string($f['label']) || trim($f['label']) === '') {
                 throw new \InvalidArgumentException("Field {$f['key']} needs a non-empty label.");

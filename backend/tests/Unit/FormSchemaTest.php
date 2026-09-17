@@ -78,7 +78,41 @@ class FormSchemaTest extends TestCase
         $s = FormSchema::fromArray(['fields' => [
             ['key' => 'f_1', 'type' => 'rating', 'label' => 'Nilai', 'required' => false],
         ]]);
-        $this->assertArrayHasKey('f_1', $s->validateAnswers(['f_1' => 9]));
-        $this->assertSame([], $s->validateAnswers(['f_1' => 3]));
+        $this->assertSame(['f_1' => 'Rating harus 1-5'], $s->validateAnswers(['f_1' => 9]));
+        $this->assertSame(['f_1' => 'Rating harus 1-5'], $s->validateAnswers(['f_1' => 0]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 1]));
+        $this->assertSame([], $s->validateAnswers(['f_1' => 5]));
+    }
+
+    public function test_number_type_rejects_non_numeric_value(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'number', 'label' => 'Jumlah', 'required' => false],
+        ]]);
+        $this->assertSame(['f_1' => 'Harus berupa angka'], $s->validateAnswers(['f_1' => 'abc']));
+        $this->assertSame([], $s->validateAnswers(['f_1' => '7']));
+    }
+
+    public function test_error_messages_are_exact_strings(): void
+    {
+        $s = FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => 'text',   'label' => 'Nama',   'required' => true],
+            ['key' => 'f_2', 'type' => 'email',  'label' => 'Email',  'required' => false],
+            ['key' => 'f_3', 'type' => 'number', 'label' => 'Jumlah', 'required' => false],
+            ['key' => 'f_4', 'type' => 'rating', 'label' => 'Nilai',  'required' => false],
+        ]]);
+        $errors = $s->validateAnswers(['f_2' => 'nope', 'f_3' => 'abc', 'f_4' => 9]);
+        $this->assertSame('Wajib diisi', $errors['f_1']);
+        $this->assertSame('Format email tidak valid', $errors['f_2']);
+        $this->assertSame('Harus berupa angka', $errors['f_3']);
+        $this->assertSame('Rating harus 1-5', $errors['f_4']);
+    }
+
+    public function test_rejects_non_string_field_type(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        FormSchema::fromArray(['fields' => [
+            ['key' => 'f_1', 'type' => ['text'], 'label' => 'X', 'required' => false],
+        ]]);
     }
 }
