@@ -1006,24 +1006,44 @@ git commit -m "feat(backend): add auth api (register/login/me) with sanctum"
 ### Task 6: Gerbang Milestone 1 — semua test + local-ci hijau
 
 **Files:**
-- Modify: `scripts/local-ci.sh` (tambahkan gate `php` yang menjalankan `php artisan test`)
+- Modify: `scripts/local-ci.sh` (deteksi stack monorepo-aware + gate `php` dari `backend/`)
+- Modify: `.github/workflows/ci.yml` (job php monorepo-aware — samakan dgn local-ci)
 
 **Interfaces:**
 - Consumes: seluruh task di atas.
 - Produces: `local-ci.sh` menjalankan test Laravel; Milestone 1 dinyatakan selesai dengan bukti.
 
-- [ ] **Step 1: Cek apakah `local-ci.sh` sudah punya gate php**
+> **Catatan controller (Ruling T6-1 — GATE MATI karena monorepo-blind):** investigasi pra-dispatch
+> menemukan bahwa `local-ci.sh` **sudah** punya gate `php:test` (line ~128), TAPI deteksi stack-nya
+> `[ -f composer.json ]` di **root repo** — sedangkan `composer.json` ada di `backend/`. Akibatnya
+> `IS_PHP=0` → gate php **tidak pernah dijalankan, dari mana pun script dipanggil** (script selalu
+> `cd "$ROOT"`). `local-ci.sh --tier t0 --fast` mencetak **"ALL GREEN"** padahal 32 test Laravel
+> (FormSchema/Workspace/Auth) **nol dijalankan** — persis yang dilarang SOP: *"A gate that reports
+> success without running is worse than no gate."* `.github/workflows/ci.yml` punya bug identik
+> (`if: hashFiles('composer.json') != ''` di root → job `php` di-skip di CI juga).
+> Fix: deteksi stack harus melihat **subdirektori** (`backend/composer.json`, dst) dan gate php
+> dijalankan dengan `cd backend`. Step di bawah diganti dengan pendekatan monorepo-aware.
 
-Run: `grep -n "php" scripts/local-ci.sh | head`
-Expected: kalau kosong → tambahkan blok berikut sebelum bagian SUMMARY.
+- [ ] **Step 1: Perbaiki deteksi stack di `local-ci.sh` (monorepo-aware)**
 
-- [ ] **Step 2: Tambahkan gate php**
+Ganti blok deteksi stack agar mencari di subdirektori, contoh:
 
 ```bash
-# --- php (Laravel core) ---
-if [ -f backend/composer.json ]; then
+# ---------- stack detection (monorepo-aware) ----------
+IS_NODE=0; IS_PHP=0; IS_PY=0
+PHP_DIR=""
+[ -f package.json ] && IS_NODE=1
+if [ -f composer.json ]; then IS_PHP=1; PHP_DIR=".";
+elif [ -f backend/composer.json ]; then IS_PHP=1; PHP_DIR="backend"; fi
+{ [ -f pyproject.toml ] || [ -f requirements.txt ]; } && IS_PY=1
+```
+
+- [ ] **Step 2: Jalankan gate php dari `PHP_DIR`**
+
+```bash
+if [ "$IS_PHP" = 1 ]; then
   echo "--- php ---"
-  if (cd backend && php artisan test --no-interaction >/tmp/formforge-php-test.log 2>&1); then
+  if (cd "$PHP_DIR" && php artisan test --no-interaction >/tmp/formforge-php-test.log 2>&1); then
     echo "ok    php:test"
   else
     echo "FAIL  php:test"; tail -30 /tmp/formforge-php-test.log; fail=1
@@ -1031,24 +1051,42 @@ if [ -f backend/composer.json ]; then
 fi
 ```
 
-- [ ] **Step 3: Jalankan gate penuh + verifikasi**
+> **Catatan:** gate `php:audit` (composer audit) juga harus `cd "$PHP_DIR"`.
+
+- [ ] **Step 3: Samakan `.github/workflows/ci.yml` (job php)**
+
+Job `php` harus: (a) `if:` mendeteksi `backend/composer.json` (bukan root), (b) pakai
+`defaults.run.working-directory: backend` (atau `cd backend` di tiap step) supaya `composer install`
++ `php artisan test` benar. Gate list harus tetap sinkron dengan `local-ci.sh` (selftest drift check).
+
+- [ ] **Step 4: Jalankan gate penuh + verifikasi**
 
 Run:
 ```bash
 docker compose up -d && bash scripts/wait-for-db.sh
 bash scripts/local-ci.sh --tier t0 --fast
 ```
-Expected: `LOCAL-CI: ALL GREEN` (secrets + php:test ok).
+Expected: SUMMARY memuat baris **`ok php:test`** (bukan cuma `secrets`), lalu `LOCAL-CI: ALL GREEN`.
 
-- [ ] **Step 4: Mutation check gate (SOP: gate yang nggak bisa gagal itu dekorasi)**
+- [ ] **Step 5: Mutation check gate (SOP: gate yang nggak bisa gagal itu dekorasi)**
 
-Rusak sementara satu test (`$this->assertTrue(false);`), jalankan `local-ci.sh --fast` → **harus exit 1**. Kembalikan → hijau.
+Rusak sementara satu test (`$this->assertTrue(false);` di backend), jalankan
+`bash scripts/local-ci.sh --tier t0 --fast` → **harus exit 1 dan mencetak `FAIL php:test`**.
+Kembalikan → hijau. Ini bukti gate **bisa merah**.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Tutup residual T5 — test 403 envelope (Ruling T6-2)**
+
+Handler 403 (`AuthorizationException`/`AccessDeniedHttpException`) belum punya test. Tambah
+`test_forbidden_returns_envelope`: buat route uji sementara ATAU pakai `$this->withoutExceptionHandling()`?
+— cara paling bersih: tambah route uji di `routes/api.php` yang melempar `AuthorizationException`
+(di-guard `app()->environment('testing')`) dan assert 403 + `{success:false, error:{code:'FORBIDDEN'}, meta:{}}`.
+Kalau dinilai terlalu invasif untuk T0, catat eksplisit sebagai deferred di ledger — jangan diam-diam.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add scripts/local-ci.sh
-git commit -m "ci: wire laravel test gate into local-ci"
+git add scripts/local-ci.sh .github/workflows/ci.yml
+git commit -m "ci: make stack detection monorepo-aware so php gate actually runs"
 ```
 
 ---
