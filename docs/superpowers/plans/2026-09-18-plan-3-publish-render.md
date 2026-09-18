@@ -1787,7 +1787,7 @@ git commit -m "feat(frontend): add publish form button and public link in builde
 - Consumes: Form Schema object (`{ fields: [...] }`), form slug, submission endpoint
 - Produces: Fully interactive public form rendering all 9 field types, validating inputs, submitting to Go Edge API, and showing confirmation screen.
 
-- [ ] **Step 1: Write failing component test for FormRenderer**
+- [x] **Step 1: Write failing component test for FormRenderer**
 
 Create `frontend/src/renderer/FormRenderer.test.tsx`:
 ```tsx
@@ -1844,12 +1844,12 @@ describe('FormRenderer', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/renderer/FormRenderer.test.tsx`
 Expected: FAIL (`FormRenderer` does not exist).
 
-- [ ] **Step 3: Implement FormRenderer and /f/[slug] page**
+- [x] **Step 3: Implement FormRenderer and /f/[slug] page**
 
 Create `frontend/src/renderer/FormRenderer.tsx`:
 Implement clean form inputs for all 9 field types with Rukun dark styling tokens:
@@ -1867,12 +1867,12 @@ Create `frontend/src/app/f/[slug]/page.tsx`:
 - Maintains a persistent `session_id` (UUID generated on mount).
 - Posts answers to Edge API `POST http://localhost:8081/f/${slug}/submit`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS (all tests pass).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/renderer/ frontend/src/app/f/
