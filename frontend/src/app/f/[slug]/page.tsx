@@ -93,6 +93,17 @@ function PublicFormContent({
         if (!isCancelled) {
           setFormData(json.data);
           setIsLoading(false);
+          const sessionId = getOrCreateSessionId(slug);
+          fetch(`${edgeUrl}/f/${slug}/event`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              session_id: sessionId,
+              type: 'view',
+            }),
+          }).catch(() => {});
         }
       } catch (err: any) {
         if (!isCancelled) {
@@ -108,6 +119,21 @@ function PublicFormContent({
       isCancelled = true;
     };
   }, [slug, edgeUrl]);
+
+  const handleEvent = (type: string, fieldKey?: string) => {
+    const sessionId = getOrCreateSessionId(slug);
+    fetch(`${edgeUrl}/f/${slug}/event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        type,
+        ...(fieldKey ? { field_key: fieldKey } : {}),
+      }),
+    }).catch(() => {});
+  };
 
   const handleSubmit = async (answers: AnswerItem[]) => {
     const sessionId = getOrCreateSessionId(slug);
@@ -179,6 +205,7 @@ function PublicFormContent({
         slug={slug}
         title={formData.title}
         onSubmit={handleSubmit}
+        onEvent={handleEvent}
       />
     </main>
   );

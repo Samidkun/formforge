@@ -269,4 +269,56 @@ describe('FormRenderer', () => {
       ]);
     });
   });
+
+  describe('telemetry events', () => {
+    it('fires onEvent("start") on first field interaction (focus or change)', () => {
+      const onEvent = vi.fn();
+      render(<FormRenderer schema={basicSchema} slug="test-form" onEvent={onEvent} />);
+
+      const nameInput = screen.getByLabelText(/Full Name/i);
+      fireEvent.focus(nameInput);
+
+      expect(onEvent).toHaveBeenCalledTimes(1);
+      expect(onEvent).toHaveBeenCalledWith('start');
+
+      // Subsequent interaction on another field should NOT trigger 'start' again
+      const emailInput = screen.getByLabelText(/Email Address/i);
+      fireEvent.focus(emailInput);
+      fireEvent.change(emailInput, { target: { value: 'alice@example.com' } });
+
+      expect(onEvent).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires onEvent("field_blur", fieldKey) on field blur', () => {
+      const onEvent = vi.fn();
+      render(<FormRenderer schema={basicSchema} slug="test-form" onEvent={onEvent} />);
+
+      const nameInput = screen.getByLabelText(/Full Name/i);
+      fireEvent.blur(nameInput);
+
+      expect(onEvent).toHaveBeenCalledWith('field_blur', 'f_name');
+
+      const emailInput = screen.getByLabelText(/Email Address/i);
+      fireEvent.blur(emailInput);
+
+      expect(onEvent).toHaveBeenCalledWith('field_blur', 'f_email');
+    });
+
+    it('fires onEvent("complete") on successful form submission', async () => {
+      const onEvent = vi.fn();
+      const onSubmit = vi.fn().mockResolvedValue({ success: true });
+      render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} onEvent={onEvent} />);
+
+      fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Alice' } });
+      fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'alice@example.com' } });
+
+      const submitBtn = screen.getByRole('button', { name: /submit/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalled();
+        expect(onEvent).toHaveBeenCalledWith('complete');
+      });
+    });
+  });
 });

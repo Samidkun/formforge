@@ -121,4 +121,83 @@ describe('PublicFormPage (/f/[slug])', () => {
 
     expect(await screen.findByText('Contact Us Form')).toBeDefined();
   });
+
+  it('dispatches view event on form load', async () => {
+    const events: any[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes(`/f/${mockSlug}/event`)) {
+        events.push(JSON.parse(init?.body as string));
+        return { status: 204, ok: true } as Response;
+      }
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({ success: true, data: mockFormData }),
+      } as Response;
+    });
+
+    render(<PublicFormPage params={{ slug: mockSlug }} />);
+
+    await waitFor(() => {
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'view',
+            session_id: expect.any(String),
+          }),
+        ])
+      );
+    });
+  });
+
+  it('dispatches telemetry events to edge API on interaction and submit', async () => {
+    const events: any[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes(`/f/${mockSlug}/event`)) {
+        events.push(JSON.parse(init?.body as string));
+        return { status: 204, ok: true } as Response;
+      }
+      if (url.includes(`/f/${mockSlug}/submit`)) {
+        return {
+          status: 200,
+          ok: true,
+          json: async () => ({ success: true, data: { submission_id: 'sub_123', status: 'complete' } }),
+        } as Response;
+      }
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({ success: true, data: mockFormData }),
+      } as Response;
+    });
+
+    render(<PublicFormPage params={{ slug: mockSlug }} />);
+    await screen.findByText('Contact Us Form');
+
+    const nameInput = screen.getByLabelText(/Name/i);
+    fireEvent.focus(nameInput);
+    fireEvent.change(nameInput, { target: { value: 'Alice' } });
+    fireEvent.blur(nameInput);
+
+    const emailInput = screen.getByLabelText(/Email/i);
+    fireEvent.focus(emailInput);
+    fireEvent.change(emailInput, { target: { value: 'alice@example.com' } });
+    fireEvent.blur(emailInput);
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'view' }),
+          expect.objectContaining({ type: 'start' }),
+          expect.objectContaining({ type: 'field_blur', field_key: 'name' }),
+          expect.objectContaining({ type: 'field_blur', field_key: 'email' }),
+          expect.objectContaining({ type: 'complete' }),
+        ])
+      );
+    });
+  });
 });

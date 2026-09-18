@@ -31,6 +31,7 @@ export interface FormRendererProps {
   onSubmit?: (answers: AnswerItem[]) => Promise<any> | any;
   submitting?: boolean;
   submitError?: string | null;
+  onEvent?: (type: string, fieldKey?: string) => void;
 }
 
 export function FormRenderer({
@@ -41,17 +42,31 @@ export function FormRenderer({
   onSubmit,
   submitting: propsSubmitting,
   submitError: propsSubmitError,
+  onEvent,
 }: FormRendererProps) {
   const [values, setValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const [submitErrorInternal, setSubmitErrorInternal] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const submitting = propsSubmitting ?? isSubmittingInternal;
   const submitError = propsSubmitError ?? submitErrorInternal;
 
+  const triggerStart = () => {
+    if (!hasStarted) {
+      setHasStarted(true);
+      onEvent?.('start');
+    }
+  };
+
+  const handleBlur = (fieldKey: string) => {
+    onEvent?.('field_blur', fieldKey);
+  };
+
   const handleFieldChange = (key: string, value: any) => {
+    triggerStart();
     setValues((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) {
       setErrors((prev) => {
@@ -138,6 +153,7 @@ export function FormRenderer({
           setSubmitErrorInternal(res.error?.message || res.error || 'Submission failed.');
         } else {
           setIsSubmitted(true);
+          onEvent?.('complete');
         }
       } catch (err: any) {
         setSubmitErrorInternal(err?.message || 'Submission failed.');
@@ -146,6 +162,7 @@ export function FormRenderer({
       }
     } else {
       setIsSubmitted(true);
+      onEvent?.('complete');
     }
   };
 
@@ -232,6 +249,8 @@ export function FormRenderer({
                   id={fieldId}
                   rows={4}
                   value={values[field.key] ?? ''}
+                  onFocus={triggerStart}
+                  onBlur={() => handleBlur(field.key)}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   className={`w-full rounded border bg-[var(--color-bg-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none transition ${
                     hasError
@@ -260,6 +279,8 @@ export function FormRenderer({
                           name={field.key}
                           value={opt}
                           checked={isChecked}
+                          onFocus={triggerStart}
+                          onBlur={() => handleBlur(field.key)}
                           onChange={() => handleFieldChange(field.key, opt)}
                           className="h-4 w-4 text-[var(--color-accent-primary)] focus:ring-[var(--color-accent-primary)]"
                         />
@@ -291,6 +312,8 @@ export function FormRenderer({
                           type="checkbox"
                           value={opt}
                           checked={isChecked}
+                          onFocus={triggerStart}
+                          onBlur={() => handleBlur(field.key)}
                           onChange={(e) => {
                             const nextList = e.target.checked
                               ? [...currentList, opt]
@@ -313,6 +336,8 @@ export function FormRenderer({
                         key={num}
                         type="button"
                         aria-label={String(num)}
+                        onFocus={triggerStart}
+                        onBlur={() => handleBlur(field.key)}
                         onClick={() => handleFieldChange(field.key, num)}
                         className={`flex h-11 w-11 items-center justify-center rounded border font-mono text-sm font-semibold transition ${
                           isSelected
@@ -356,6 +381,8 @@ export function FormRenderer({
                     id={fieldId}
                     type="file"
                     className="sr-only"
+                    onFocus={triggerStart}
+                    onBlur={() => handleBlur(field.key)}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       handleFieldChange(field.key, file ? file.name : '');
@@ -367,6 +394,8 @@ export function FormRenderer({
                   id={fieldId}
                   type="date"
                   value={values[field.key] ?? ''}
+                  onFocus={triggerStart}
+                  onBlur={() => handleBlur(field.key)}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   className={`w-full rounded border bg-[var(--color-bg-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none transition ${
                     hasError
@@ -379,6 +408,8 @@ export function FormRenderer({
                   id={fieldId}
                   type="number"
                   value={values[field.key] ?? ''}
+                  onFocus={triggerStart}
+                  onBlur={() => handleBlur(field.key)}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : Number(e.target.value);
                     handleFieldChange(field.key, val);
@@ -394,6 +425,8 @@ export function FormRenderer({
                   id={fieldId}
                   type="email"
                   value={values[field.key] ?? ''}
+                  onFocus={triggerStart}
+                  onBlur={() => handleBlur(field.key)}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   className={`w-full rounded border bg-[var(--color-bg-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none transition ${
                     hasError
@@ -406,6 +439,8 @@ export function FormRenderer({
                   id={fieldId}
                   type="text"
                   value={values[field.key] ?? ''}
+                  onFocus={triggerStart}
+                  onBlur={() => handleBlur(field.key)}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   className={`w-full rounded border bg-[var(--color-bg-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none transition ${
                     hasError
