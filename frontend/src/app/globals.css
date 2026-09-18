@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Design token — DIWARISI dari Rukun (spec §6), bukan sistem paralel. */
+@theme {
+  --color-bg-primary: #16181C;
+  --color-surface-primary: #1E2228;
+  --color-surface-elevated: #252A32;
+  --color-border-hairline: #2A2E35;
+  --color-accent-primary: #C7F53B;
+  --color-accent-success: #4EE5B6;
+  --color-accent-warning: #F5A623;
+  --color-accent-danger: #FF4D4D;
+  --color-text-primary: #F4F5F6;
+  --color-text-secondary: #9DA5B4;
+  --color-text-muted: #5A6270;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
