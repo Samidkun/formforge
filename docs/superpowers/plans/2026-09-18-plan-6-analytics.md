@@ -39,7 +39,7 @@
   - `$form->events()`: HasMany `FormEvent`
   - `$form->dailyStats()`: HasMany `FormDailyStat`
 
-- [ ] **Step 1: Write failing feature test for models and migrations**
+- [x] **Step 1: Write failing feature test for models and migrations**
 
 In `backend/tests/Feature/FormAnalyticsModelTest.php`:
 ```php
@@ -102,12 +102,12 @@ class FormAnalyticsModelTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to confirm it fails**
+- [x] **Step 2: Run test to confirm it fails**
 
 Run: `cd backend && php artisan test tests/Feature/FormAnalyticsModelTest.php`
 Expected: FAIL (table not found).
 
-- [ ] **Step 3: Implement migrations and Eloquent models**
+- [x] **Step 3: Implement migrations and Eloquent models**
 
 1. Create migration `2026_09_18_000005_create_form_events_table.php`:
    - `id`: bigIncrements / uuid
@@ -131,17 +131,17 @@ Expected: FAIL (table not found).
 3. Create `FormEvent.php` and `FormDailyStat.php` with mass assignment guards.
 4. Add `events()` and `dailyStats()` HasMany relations to `Form.php`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd backend && php artisan test tests/Feature/FormAnalyticsModelTest.php`
 Expected: PASS.
 
-- [ ] **Step 5: Run full backend test suite**
+- [x] **Step 5: Run full backend test suite**
 
 Run: `cd backend && php artisan test`
 Expected: 80+ tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/database/migrations/ backend/app/Models/ backend/tests/Feature/FormAnalyticsModelTest.php
