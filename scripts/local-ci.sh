@@ -167,13 +167,14 @@ elif [ "$TIER" = "t0" ]; then
   RESULTS+=("SKIP  e2e/a11y/perf — tier t0 (run without --tier to force)")
   printf '\n--- e2e/a11y/perf: SKIP (tier t0) ---\n'
 else
-  if [ -f playwright.config.ts ] || [ -f playwright.config.js ]; then
+  if [ -f playwright.config.ts ] || [ -f playwright.config.js ] || [ -f "$NODE_DIR/playwright.config.ts" ]; then
+    PW_DIR="$NODE_DIR"; [ -f playwright.config.ts ] && PW_DIR="."
     if [ -f e2e/a11y.spec.ts ] && ! ls node_modules/@axe-core >/dev/null 2>&1; then
       RESULTS+=("SKIP  a11y — @axe-core/playwright not installed (npm i -D @axe-core/playwright)")
       printf '\n--- a11y: SKIP (dependency missing) ---\n'
-      gate "e2e" "" npx playwright test e2e/smoke.spec.ts
+      gate "e2e" "" bash -c "cd '$PW_DIR' && npx playwright test" e2e/smoke.spec.ts
     else
-      gate "e2e" "" npx playwright test
+      gate "e2e" "" bash -c "cd '$PW_DIR' && npx playwright test"
     fi
   else
     RESULTS+=("SKIP  e2e — no playwright config")

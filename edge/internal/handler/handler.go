@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"errors"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 )
 
 var ErrNotFound = errors.New("not found")
+var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
 type PublishedFormData struct {
 	FormID       string
@@ -180,6 +182,14 @@ func (h *Handler) handleSubmit(w http.ResponseWriter, r *http.Request, slug stri
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]interface{}{
 			"success": false,
 			"error":   map[string]string{"code": "VALIDATION_FAILED", "message": "session_id is required."},
+		})
+		return
+	}
+
+	if !uuidRegex.MatchString(p.SessionID) {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "VALIDATION_FAILED", "message": "session_id must be a valid UUID."},
 		})
 		return
 	}
