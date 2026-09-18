@@ -317,7 +317,7 @@ git commit -m "feat(frontend): instrument public form renderer with telemetry ev
 - `api.getAnalytics(formId, token)`: fetches analytics summary from backend.
 - `AnalyticsDashboard`: renders KPI cards (Views, Starts, Completes, Conversion Rate), Funnel visualizer bar chart, and Field Dropout Table using Rukun design tokens.
 
-- [ ] **Step 1: Write failing tests for getAnalytics API client and Dashboard component**
+- [x] **Step 1: Write failing tests for getAnalytics API client and Dashboard component**
 
 In `frontend/src/lib/api.test.ts`:
 - Test `getAnalytics` requests `GET /api/forms/:id/analytics` with proper headers.
@@ -327,12 +327,12 @@ In `frontend/src/analytics/components/AnalyticsDashboard.test.tsx`:
 - Test renders funnel bar chart representing views, starts, and completes.
 - Test renders field dropout breakdown table showing field names, interactions, and drop rates.
 
-- [ ] **Step 2: Run tests to confirm failure**
+- [x] **Step 2: Run tests to confirm failure**
 
 Run: `cd frontend && npm test src/lib/api.test.ts src/analytics/components/AnalyticsDashboard.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement getAnalytics API client and AnalyticsDashboard component**
+- [x] **Step 3: Implement getAnalytics API client and AnalyticsDashboard component**
 
 1. In `frontend/src/lib/api.ts`:
    - Export `getAnalytics(formId: string, token?: string): Promise<AnalyticsResult>`.
@@ -344,17 +344,17 @@ Expected: FAIL.
    - Funnel component: visual step bars showing relative drop between View -> Start -> Complete.
    - Field Dropoff Table: columns: No, Field Name, Tipe, Interaksi, Dropouts, Dropout Rate.
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/lib/api.ts frontend/src/lib/api.test.ts frontend/src/analytics/
