@@ -1,4 +1,5 @@
 import type { Schema } from '../builder/types';
+import type { AnalyticsResult } from '../analytics/types';
 
 export interface FormDetail {
   id: string;
@@ -158,6 +159,23 @@ export function exportResponsesUrl(formId: string, token?: string): string {
   return `${API_BASE}/api/forms/${formId}/responses/export`;
 }
 
+export async function getAnalytics(
+  formId: string,
+  token?: string
+): Promise<AnalyticsResult> {
+  const res = await fetch(`${API_BASE}/api/forms/${formId}/analytics`, {
+    headers: {
+      Accept: 'application/json',
+      ...authHeaders(token),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gagal memuat analitik (status: ${res.status})`);
+  }
+  return res.json();
+}
+
 export const api = {
   fetchForm,
   getForm: fetchForm,
@@ -165,6 +183,7 @@ export const api = {
   publishForm,
   getResponses,
   exportResponsesUrl,
+  getAnalytics,
 };
 
 export default api;

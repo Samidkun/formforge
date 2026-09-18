@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchForm, saveDraft, publishForm, api } from './api';
+import { fetchForm, saveDraft, publishForm, getAnalytics, api } from './api';
 
 describe('API Client — fetchForm & saveDraft', () => {
   beforeEach(() => {
@@ -273,5 +273,72 @@ describe('API Client — fetchForm & saveDraft', () => {
       configurable: true,
       writable: true,
     });
+  });
+
+  it('fetches form analytics summary with proper headers', async () => {
+    const mockAnalytics = {
+      success: true,
+      data: {
+        funnel: { views: 100, starts: 50, completes: 25, conversion_rate: 50.0 },
+        dropoff: [
+          { field_key: 'f_name', label: 'Nama', type: 'text', interactions: 50, dropouts: 10, drop_rate: 20.0 },
+        ],
+        daily: [
+          { date: '2026-09-18', views: 100, starts: 50, completes: 25 },
+        ],
+      },
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockAnalytics,
+      })
+    );
+
+    const res = await getAnalytics('form-1', 'auth-token-xyz');
+    expect(res).toEqual(mockAnalytics);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/form-1/analytics'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          Authorization: 'Bearer auth-token-xyz',
+        }),
+      })
+    );
+  });
+
+  it('getAnalytics is available on default api object', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, data: {} }),
+      })
+    );
+
+    await api.getAnalytics('form-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/form-1/analytics'),
+      expect.anything()
+    );
+  });
+
+  it('getAnalytics throws error when server returns error response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          success: false,
+          error: { message: 'Forbidden access to form analytics' },
+        }),
+      })
+    );
+
+    await expect(getAnalytics('form-1')).rejects.toThrow(/Forbidden access to form analytics/);
   });
 });
