@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchForm, saveDraft } from './api';
+import { fetchForm, saveDraft, publishForm } from './api';
 
 describe('API Client — fetchForm & saveDraft', () => {
   beforeEach(() => {
@@ -121,5 +121,71 @@ describe('API Client — fetchForm & saveDraft', () => {
     } as Response);
 
     await expect(saveDraft('uuid-1', schema)).rejects.toThrow(/Invalid schema/);
+  });
+
+  it('publishes form successfully', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            form: { id: 'f-1', status: 'published' },
+            version: { version_no: 1 },
+          },
+        }),
+      })
+    );
+
+    const res = await publishForm('f-1');
+    expect(res.data.form.status).toBe('published');
+    expect(res.data.version.version_no).toBe(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/f-1/publish'),
+      expect.objectContaining({ method: 'POST' })
+    );
+  });
+
+  it('publishForm menyertakan header Authorization jika token diberikan', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            form: { id: 'f-1', status: 'published' },
+            version: { version_no: 1 },
+          },
+        }),
+      })
+    );
+
+    await publishForm('f-1', 'publish-token');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/f-1/publish'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer publish-token',
+        }),
+      })
+    );
+  });
+
+  it('publishForm melempar error saat server mengembalikan gagal', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({
+          success: false,
+          error: { message: 'Cannot publish form with zero fields.' },
+        }),
+      })
+    );
+
+    await expect(publishForm('f-1')).rejects.toThrow(/Cannot publish form with zero fields/);
   });
 });

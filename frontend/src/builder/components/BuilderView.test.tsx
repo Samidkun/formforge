@@ -104,4 +104,99 @@ describe('BuilderView component', () => {
 
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  it('menampilkan tombol Publish dan memanggil onPublish saat diklik', async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn();
+
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        onPublish={onPublish}
+      />
+    );
+
+    const publishBtn = screen.getByRole('button', { name: /Publish/i });
+    expect(publishBtn).toBeInTheDocument();
+    expect(publishBtn).toBeEnabled();
+
+    await user.click(publishBtn);
+    expect(onPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it('men-disable tombol Publish saat isPublishing=true', () => {
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        isPublishing={true}
+        onPublish={vi.fn()}
+      />
+    );
+
+    const publishBtn = screen.getByRole('button', { name: /Publishing.../i });
+    expect(publishBtn).toBeDisabled();
+  });
+
+  it('menampilkan badge Published dan link publik saat status="published"', () => {
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        status="published"
+        slug="pendaftaran-siswa"
+      />
+    );
+
+    expect(screen.getByText('Published')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /\/f\/pendaftaran-siswa/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/f/pendaftaran-siswa');
+  });
+
+  it('menyediakan tombol copy link untuk menyalin URL publik', async () => {
+    const user = userEvent.setup();
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: writeTextMock,
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        status="published"
+        slug="pendaftaran-siswa"
+      />
+    );
+
+    const copyBtn = screen.getByRole('button', { name: /copy/i });
+    expect(copyBtn).toBeInTheDocument();
+
+    await user.click(copyBtn);
+    expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/f/pendaftaran-siswa'));
+    expect(await screen.findByText(/Copied!/i)).toBeInTheDocument();
+  });
+
+  it('menampilkan pesan publishError jika terjadi kesalahan publish', () => {
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        publishError="Cannot publish form with zero fields."
+      />
+    );
+
+    expect(screen.getByText('Cannot publish form with zero fields.')).toBeInTheDocument();
+  });
 });

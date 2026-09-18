@@ -6,7 +6,20 @@ import { useFormBuilder } from '@/builder/hooks/useFormBuilder';
 
 export default function EditFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { schema, dispatch, title, isLoading, loadError, saveStatus, save } = useFormBuilder(id);
+  const {
+    schema,
+    dispatch,
+    title,
+    slug,
+    status,
+    isLoading,
+    loadError,
+    saveStatus,
+    save,
+    isPublishing,
+    publish,
+    publishError,
+  } = useFormBuilder(id);
 
   if (loadError) {
     return (
@@ -21,8 +34,13 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
       schema={schema}
       dispatch={dispatch}
       title={title || `Form ${id}`}
+      slug={slug}
+      status={status}
       saveStatus={saveStatus}
       onSave={save}
+      onPublish={publish}
+      isPublishing={isPublishing}
+      publishError={publishError}
       isLoading={isLoading}
     />
   );

@@ -107,4 +107,76 @@ describe('useFormBuilder hook', () => {
     expect(result.current.loadError).toBeNull();
     expect(result.current.error).toBeNull();
   });
+
+  it('handles publish action successfully and updates status and version', async () => {
+    vi.spyOn(api, 'fetchForm').mockResolvedValueOnce({
+      id: 'uuid-1',
+      title: 'Test Form',
+      slug: 'test-form',
+      status: 'draft',
+      draft_schema: { fields: [{ key: 'f_1', type: 'text', label: 'Nama' }] },
+    });
+    // Mock getForm and publishForm
+    const publishSpy = vi.spyOn(api, 'publishForm').mockResolvedValueOnce({
+      success: true,
+      data: {
+        form: {
+          id: 'uuid-1',
+          title: 'Test Form',
+          slug: 'test-form',
+          status: 'published',
+          draft_schema: { fields: [{ key: 'f_1', type: 'text', label: 'Nama' }] },
+          current_version_id: 'ver-uuid-1',
+        },
+        version: {
+          id: 'ver-uuid-1',
+          version_no: 1,
+          form_id: 'uuid-1',
+          schema: { fields: [{ key: 'f_1', type: 'text', label: 'Nama' }] },
+          published_at: '2026-09-18T00:00:00Z',
+        },
+      },
+    });
+
+    const { result } = renderHook(() => useFormBuilder('uuid-1', 'auth-token'));
+    await act(async () => {});
+
+    expect(result.current.status).toBe('draft');
+    expect(result.current.slug).toBe('test-form');
+    expect(result.current.publishedVersion).toBeNull();
+
+    await act(async () => {
+      await result.current.publish();
+    });
+
+    expect(publishSpy).toHaveBeenCalledWith('uuid-1', 'auth-token');
+    expect(result.current.status).toBe('published');
+    expect(result.current.currentVersionId).toBe('ver-uuid-1');
+    expect(result.current.publishedVersion).toBe(1);
+    expect(result.current.isPublishing).toBe(false);
+    expect(result.current.publishError).toBeNull();
+  });
+
+  it('mengatur publishError saat publishForm gagal', async () => {
+    vi.spyOn(api, 'fetchForm').mockResolvedValueOnce({
+      id: 'uuid-1',
+      title: 'Test Form',
+      slug: 'test-form',
+      status: 'draft',
+      draft_schema: { fields: [] },
+    });
+    // Mock publishForm failure
+    vi.spyOn(api, 'publishForm').mockRejectedValueOnce(new Error('Cannot publish form with zero fields.'));
+
+    const { result } = renderHook(() => useFormBuilder('uuid-1'));
+    await act(async () => {});
+
+    await act(async () => {
+      await result.current.publish();
+    });
+
+    expect(result.current.status).toBe('draft');
+    expect(result.current.isPublishing).toBe(false);
+    expect(result.current.publishError).toBe('Cannot publish form with zero fields.');
+  });
 });
