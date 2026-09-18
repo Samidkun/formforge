@@ -539,7 +539,7 @@ git commit -m "feat(frontend): add getResponses and exportResponsesUrl to api cl
 - Consumes: `schema: FormSchema`, `items: Submission[]`, `total: number`, `statusFilter: string`, `onStatusFilterChange: (status: string) => void`, `onExport: () => void`
 - Produces: Data table rendering headers from schema fields, status badges, formatted timestamps, and export button.
 
-- [ ] **Step 1: Write failing component test**
+- [x] **Step 1: Write failing component test**
 
 Create `frontend/src/responses/components/ResponsesTable.test.tsx`:
 ```tsx
@@ -631,12 +631,12 @@ describe('ResponsesTable', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/responses/components/ResponsesTable.test.tsx`
 Expected: FAIL (`ResponsesTable` does not exist).
 
-- [ ] **Step 3: Implement ResponsesTable component**
+- [x] **Step 3: Implement ResponsesTable component**
 
 Create `frontend/src/responses/components/ResponsesTable.tsx`:
 ```tsx
@@ -800,12 +800,12 @@ export function ResponsesTable({
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npm test src/responses/components/ResponsesTable.test.tsx`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/responses/components/
