@@ -48,7 +48,7 @@
   - `Submission::answers() -> HasMany`
   - `SubmissionAnswer::submission() -> BelongsTo`
 
-- [ ] **Step 1: Write the failing feature test for models and migrations**
+- [x] **Step 1: Write the failing feature test for models and migrations**
 
 Create `backend/tests/Feature/SubmissionModelTest.php`:
 ```php
@@ -189,12 +189,12 @@ class SubmissionModelTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd backend && php artisan test tests/Feature/SubmissionModelTest.php`
 Expected: FAIL because tables and models do not exist yet.
 
-- [ ] **Step 3: Create migrations and models**
+- [x] **Step 3: Create migrations and models**
 
 Create `backend/database/migrations/2026_09_18_000002_create_form_versions_table.php`:
 ```php
@@ -440,12 +440,12 @@ Update `backend/app/Models/Form.php` to add relationships:
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd backend && php artisan test tests/Feature/SubmissionModelTest.php`
 Expected: PASS (3 tests, assertions pass).
 
-- [ ] **Step 5: Run full backend suite and commit**
+- [x] **Step 5: Run full backend suite and commit**
 
 Run: `cd backend && php artisan test`
 Expected: 60 passed.
