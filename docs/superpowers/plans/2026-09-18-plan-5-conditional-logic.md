@@ -371,7 +371,7 @@ git commit -m "feat(frontend): add conditional logic rule types and visibility e
 - Consumes: `field: FormField`, `allFields: FormField[]`, `dispatch: React.Dispatch<SchemaAction>`
 - Produces: UI section "Syarat Tampil (Logic)" allowing user to enable conditional display, select preceding field, select operator, and enter comparison value.
 
-- [ ] **Step 1: Write failing component tests for logic config UI**
+- [x] **Step 1: Write failing component tests for logic config UI**
 
 In `frontend/src/builder/components/FieldConfigPanel.test.tsx`:
 ```tsx
@@ -418,12 +418,12 @@ In `frontend/src/builder/components/FieldConfigPanel.test.tsx`:
   })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/builder/components/FieldConfigPanel.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement conditional logic section in FieldConfigPanel**
+- [x] **Step 3: Implement conditional logic section in FieldConfigPanel**
 
 Add `allFields?: FormField[]` to `FieldConfigPanelProps`.
 In `FieldConfigPanel.tsx`:
@@ -437,17 +437,17 @@ In `FieldConfigPanel.tsx`:
 
 Update `BuilderView.tsx` to pass `allFields={schema.fields}` to `FieldConfigPanel`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/builder/components/FieldConfigPanel.tsx frontend/src/builder/components/FieldConfigPanel.test.tsx frontend/src/builder/components/BuilderView.tsx
