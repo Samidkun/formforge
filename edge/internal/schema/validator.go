@@ -93,7 +93,7 @@ func ValidateAnswers(schemaJSON []byte, isComplete bool, answers []Answer) (map[
 				errors[f.Key] = "Value must be a string."
 			}
 
-		case "file_upload":
+		case "file", "file_upload":
 			switch a.Value.(type) {
 			case string, map[string]interface{}:
 				// valid file reference or metadata

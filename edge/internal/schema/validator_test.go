@@ -340,4 +340,55 @@ func TestValidateAnswers_HiddenField_SkipsTypeValidation(t *testing.T) {
 	}
 }
 
+func TestValidateAnswers_FileTypeValidation(t *testing.T) {
+	schemaRaw := `{
+		"fields": [
+			{"key": "f_resume", "type": "file", "label": "Resume File", "required": true}
+		]
+	}`
+
+	// 1. Valid string answer (URL or filename)
+	validStrAnswers := []Answer{
+		{FieldKey: "f_resume", Value: "/storage/uploads/resume.pdf"},
+	}
+	errs, err := ValidateAnswers([]byte(schemaRaw), true, validStrAnswers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(errs) != 0 {
+		t.Errorf("expected 0 errors for valid file string answer, got: %v", errs)
+	}
+
+	// 2. Valid map answer (metadata object)
+	validMapAnswers := []Answer{
+		{
+			FieldKey: "f_resume",
+			Value: map[string]interface{}{
+				"id":       "upl-123",
+				"filename": "resume.pdf",
+				"url":      "/storage/uploads/resume.pdf",
+			},
+		},
+	}
+	errs, err = ValidateAnswers([]byte(schemaRaw), true, validMapAnswers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(errs) != 0 {
+		t.Errorf("expected 0 errors for valid file map answer, got: %v", errs)
+	}
+
+	// 3. Invalid answer (integer)
+	invalidAnswers := []Answer{
+		{FieldKey: "f_resume", Value: 12345},
+	}
+	errs, err = ValidateAnswers([]byte(schemaRaw), true, invalidAnswers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(errs) == 0 {
+		t.Errorf("expected validation error for invalid file type answer (number), got 0 errors")
+	}
+}
+
 
