@@ -269,18 +269,18 @@ git commit -m "feat(backend): add analytics rollup computation and GET /api/form
 **Interfaces:**
 - Produces: Client-side event dispatcher emitting `view` on mount, `start` on initial input change/focus, `field_blur` on input blur, and `complete` upon submission.
 
-- [ ] **Step 1: Write failing tests for client event tracking**
+- [x] **Step 1: Write failing tests for client event tracking**
 
 In `frontend/src/renderer/FormRenderer.test.tsx`:
 - Test that on initial field change/interaction, an onEvent callback or edge event POST is triggered with `type: 'start'`.
 - Test that on field blur, a `field_blur` event is triggered with the corresponding `field_key`.
 
-- [ ] **Step 2: Run test to confirm failure**
+- [x] **Step 2: Run test to confirm failure**
 
 Run: `cd frontend && npm test src/renderer/FormRenderer.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement event tracking in FormRenderer and public page**
+- [x] **Step 3: Implement event tracking in FormRenderer and public page**
 
 - Add `onEvent?: (type: string, fieldKey?: string) => void` prop to `FormRenderer`.
 - On first field focus or value input change, fire `onEvent('start')`.
@@ -290,12 +290,12 @@ Expected: FAIL.
   - Send `POST /f/:slug/event` (`view`) on page mount.
   - Wire `onEvent` callback from `FormRenderer` to send `POST /f/:slug/event` with `session_id`, `type`, and optional `field_key`.
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 Run: `cd frontend && npm test`
 Expected: All Vitest tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/renderer/ frontend/src/app/f/
