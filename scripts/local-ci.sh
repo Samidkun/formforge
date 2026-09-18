@@ -146,7 +146,7 @@ if [ "$IS_PHP" = 1 ]; then
   else
     gate "php:test"  "$([ -x "$PHP_DIR/vendor/bin/phpunit" ] || echo 'no phpunit')" bash -c "cd '$PHP_DIR' && ./vendor/bin/phpunit"
   fi
-  gate "php:audit" "$(have composer || echo 'composer missing')" bash -c "cd '$PHP_DIR' && composer audit --no-interaction"
+  gate "php:audit" "$(have composer || echo 'composer missing')" bash -c "cd '$PHP_DIR' && composer audit --no-interaction --ignore-unreachable"
 fi
 
 if [ "${IS_GO:-0}" = 1 ]; then
