@@ -187,7 +187,7 @@ git commit -m "feat(backend): add conditional logic validation preventing circul
 - Produces: `IsFieldVisible(f Field, answerMap map[string]interface{}) bool`
 - Updates `ValidateAnswers`: only validates `Required` and format for visible fields!
 
-- [ ] **Step 1: Write failing unit test for visibility evaluation**
+- [x] **Step 1: Write failing unit test for visibility evaluation**
 
 Add tests in `edge/internal/schema/validator_test.go`:
 ```go
@@ -227,12 +227,12 @@ func TestValidateAnswers_ConditionalLogic_ExemptsHiddenRequiredField(t *testing.
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd edge && go test -v ./internal/schema`
 Expected: FAIL (`expected 0 errors for hidden required field`).
 
-- [ ] **Step 3: Implement visibility evaluation in Go**
+- [x] **Step 3: Implement visibility evaluation in Go**
 
 In `edge/internal/schema/validator.go`:
 ```go
@@ -261,12 +261,12 @@ Implement `IsFieldVisible`:
 In `ValidateAnswers`:
 - If `!IsFieldVisible(f, answerMap)` -> skip required check and value type validation!
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd edge && go test -v ./internal/schema`
 Expected: PASS (all tests pass).
 
-- [ ] **Step 5: Run all Go tests and commit**
+- [x] **Step 5: Run all Go tests and commit**
 
 Run: `cd edge && go test -v ./... && go vet ./...`
 Expected: PASS.
