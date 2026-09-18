@@ -121,7 +121,7 @@ export function BuilderView({
             <button
               type="button"
               onClick={onPublish}
-              disabled={isPublishing}
+              disabled={isPublishing || saveStatus === 'saving'}
               className="rounded bg-[var(--color-accent-primary)] px-3 py-1.5 text-xs font-semibold text-[var(--color-bg-primary)] hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {isPublishing ? 'Publishing...' : 'Publish'}
