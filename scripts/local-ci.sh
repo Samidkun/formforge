@@ -50,7 +50,7 @@ TIER="$(echo "$TIER" | tr '[:upper:]' '[:lower:]')"
 # root-only `[ -f composer.json ]` check left IS_PHP=0 and the php gate never ran
 # (local-ci printed ALL GREEN with 32 tests unrun). Detect composer.json in the
 # root first, else in backend/. PHP_DIR is the directory the php gates run from.
-IS_NODE=0; IS_PHP=0; IS_PY=0
+IS_NODE=0; IS_PHP=0; IS_PY=0; IS_GO=0
 NODE_DIR="."; PHP_DIR="."
 # Node detection is monorepo-aware too (same class as the php axis, residual R2):
 # the node app may live in a subdir; a package.json sitting next to a
@@ -61,6 +61,9 @@ done
 if [ -f composer.json ]; then IS_PHP=1; PHP_DIR="."
 elif [ -f backend/composer.json ]; then IS_PHP=1; PHP_DIR="backend"; fi
 { [ -f pyproject.toml ] || [ -f requirements.txt ]; } && IS_PY=1
+if [ -d "edge" ] && [ -f "edge/go.mod" ]; then
+  IS_GO=1
+fi
 
 RESULTS=()
 fail=0
@@ -144,6 +147,11 @@ if [ "$IS_PHP" = 1 ]; then
     gate "php:test"  "$([ -x "$PHP_DIR/vendor/bin/phpunit" ] || echo 'no phpunit')" bash -c "cd '$PHP_DIR' && ./vendor/bin/phpunit"
   fi
   gate "php:audit" "$(have composer || echo 'composer missing')" bash -c "cd '$PHP_DIR' && composer audit --no-interaction"
+fi
+
+if [ "${IS_GO:-0}" = 1 ]; then
+  gate "go:vet" "$(have go || echo 'go missing')" bash -c "cd edge && go vet ./..."
+  gate "go:test" "$(have go || echo 'go missing')" bash -c "cd edge && go test ./..."
 fi
 
 if [ "$IS_PY" = 1 ]; then
