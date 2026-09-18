@@ -429,7 +429,7 @@ git commit -m "feat(frontend): add /forms/[id]/analytics page route and update u
 - Produces: Playwright test verifying the full analytics flow: navigating to `/forms/:id/analytics`, viewing KPI metric cards, funnel visualizer, and field dropout table.
 - All 11 local-ci gates passing cleanly.
 
-- [ ] **Step 1: Write Playwright E2E test for Analytics**
+- [x] **Step 1: Write Playwright E2E test for Analytics**
 
 Create `frontend/e2e/analytics.spec.ts`:
 - Mock `GET /api/forms/:id`
@@ -440,17 +440,17 @@ Create `frontend/e2e/analytics.spec.ts`:
 - Assert field dropout table renders field entries
 - Click tab "Responses" or "Builder" to verify tab navigation works
 
-- [ ] **Step 2: Run Playwright test**
+- [x] **Step 2: Run Playwright test**
 
 Run: `cd frontend && npx playwright test e2e/analytics.spec.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Run full local-ci gate**
+- [x] **Step 3: Run full local-ci gate**
 
 Run: `bash scripts/local-ci.sh --tier t0 --fast`
 Expected: ALL GREEN (11/11 gates pass).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/e2e/analytics.spec.ts
