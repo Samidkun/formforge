@@ -37,4 +37,14 @@ class Form extends Model
     {
         return $this->hasMany(Submission::class);
     }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(FormEvent::class);
+    }
+
+    public function dailyStats(): HasMany
+    {
+        return $this->hasMany(FormDailyStat::class);
+    }
 }
