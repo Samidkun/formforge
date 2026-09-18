@@ -1701,7 +1701,7 @@ git commit -m "feat(edge): implement public form read and submission intake HTTP
   - `useFormBuilder` exposes `publish()`, `isPublishing: boolean`, `publishError: string | null`, `publishedVersion: number | null`
   - `BuilderView` renders "Publish" button, "Published" status badge, and copyable public form link `/f/${form.slug}`
 
-- [ ] **Step 1: Write failing tests for publish API client and hook**
+- [x] **Step 1: Write failing tests for publish API client and hook**
 
 Add tests in `frontend/src/lib/api.test.ts`:
 ```ts
@@ -1731,12 +1731,12 @@ Add tests in `frontend/src/builder/hooks/useFormBuilder.test.ts`:
   })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/lib/api.test.ts`
 Expected: FAIL (`publishForm` is not a function).
 
-- [ ] **Step 3: Implement publish in api.ts, hook, and BuilderView**
+- [x] **Step 3: Implement publish in api.ts, hook, and BuilderView**
 
 In `frontend/src/lib/api.ts`:
 ```ts
@@ -1762,12 +1762,12 @@ Add `isPublishing`, `publishError`, `publish()` method that calls `api.publishFo
 In `frontend/src/builder/components/BuilderView.tsx`:
 Add Publish button in the header alongside Save, displaying public link badge `http://localhost:3000/f/${form.slug}` when `form.status === 'published'`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS (all frontend tests pass).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/lib/api.ts frontend/src/builder/hooks/useFormBuilder.ts frontend/src/builder/components/BuilderView.tsx frontend/src/
