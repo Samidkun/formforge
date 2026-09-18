@@ -466,7 +466,7 @@ git commit -m "feat(frontend): add conditional logic rule builder in FieldConfig
 - Consumes: `field.logic`, form user input state `values`
 - Produces: Dynamically hides fields when `isFieldVisible(field, values)` is false, ignores hidden fields during required validation, and filters out answers for hidden fields on submit.
 
-- [ ] **Step 1: Write failing component tests for dynamic display**
+- [x] **Step 1: Write failing component tests for dynamic display**
 
 In `frontend/src/renderer/FormRenderer.test.tsx`:
 ```tsx
@@ -524,12 +524,12 @@ In `frontend/src/renderer/FormRenderer.test.tsx`:
   })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/renderer/FormRenderer.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement dynamic evaluation in FormRenderer**
+- [x] **Step 3: Implement dynamic evaluation in FormRenderer**
 
 In `frontend/src/renderer/FormRenderer.tsx`:
 - Import `isFieldVisible` from `@/builder/logic`.
@@ -538,17 +538,17 @@ In `frontend/src/renderer/FormRenderer.tsx`:
   - Only validate `required` and type format for fields where `isFieldVisible(field, values) === true`.
   - Only include answers for visible fields in `answers` payload.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/renderer/FormRenderer.tsx frontend/src/renderer/FormRenderer.test.tsx
