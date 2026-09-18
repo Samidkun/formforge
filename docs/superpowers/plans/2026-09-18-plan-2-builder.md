@@ -1117,7 +1117,7 @@ git commit -m "feat(frontend): scaffold next.js builder with rukun design tokens
   - `canAddField(schema): boolean` (batas 50 field)
   - `MAX_FIELDS = 50`
 
-- [ ] **Step 1: Tulis test reducer yang gagal (LENGKAP — ini spesifikasi perilakunya)**
+- [x] **Step 1: Tulis test reducer yang gagal (LENGKAP — ini spesifikasi perilakunya)**
 
 ```ts
 // frontend/src/builder/schema.test.ts
@@ -1299,12 +1299,12 @@ describe('schemaReducer — immutability menyeluruh', () => {
 });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan GAGAL**
+- [x] **Step 2: Jalankan test, pastikan GAGAL**
 
 Run: `cd frontend && npx vitest run src/builder/schema.test.ts`
 Expected: FAIL — `Failed to resolve import "./schema"`.
 
-- [ ] **Step 3: Implementasi reducer**
+- [x] **Step 3: Implementasi reducer**
 
 ```ts
 // frontend/src/builder/schema.ts
@@ -1388,12 +1388,12 @@ export function schemaReducer(state: Schema, action: SchemaAction): Schema {
 }
 ```
 
-- [ ] **Step 4: Jalankan test, pastikan PASS**
+- [x] **Step 4: Jalankan test, pastikan PASS**
 
 Run: `cd frontend && npx vitest run src/builder/schema.test.ts`
 Expected: PASS — **24 test**.
 
-- [ ] **Step 5: Mutation check (SOP: gate yang tidak bisa gagal itu dekorasi)**
+- [x] **Step 5: Mutation check (SOP: gate yang tidak bisa gagal itu dekorasi)**
 
 Rusak **satu** baris di `schema.ts`, jalankan test, pastikan MERAH, lalu kembalikan:
 
@@ -1407,7 +1407,7 @@ Rusak **satu** baris di `schema.ts`, jalankan test, pastikan MERAH, lalu kembali
 
 Bukti: catat EXIT=1 + nama test yang gagal untuk tiap mutasi; restore; `md5sum` byte-identical.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/builder/schema.ts frontend/src/builder/schema.test.ts
