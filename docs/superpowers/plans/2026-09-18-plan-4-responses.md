@@ -826,7 +826,7 @@ git commit -m "feat(frontend): implement ResponsesTable component with status fi
   - Route `/forms/[id]/responses` fetching responses and displaying table with CSV export.
   - Sub-navigation links in `/forms/[id]/edit` and `/forms/[id]/responses` to switch between "Builder" and "Responses".
 
-- [ ] **Step 1: Write failing test for responses page**
+- [x] **Step 1: Write failing test for responses page**
 
 Create `frontend/src/app/forms/[id]/responses/page.test.tsx`:
 ```tsx
@@ -886,12 +886,12 @@ describe('ResponsesPage', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/app/forms/\[id\]/responses/page.test.tsx`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement ResponsesPage and tab switcher in BuilderView**
+- [x] **Step 3: Implement ResponsesPage and tab switcher in BuilderView**
 
 Create `frontend/src/app/forms/[id]/responses/page.tsx`:
 - Fetches form details (for schema and title) and responses.
@@ -901,17 +901,17 @@ Create `frontend/src/app/forms/[id]/responses/page.tsx`:
 Update `frontend/src/builder/components/BuilderView.tsx`:
 - Add tab link in header: "Builder" (active) and "Responses" link to `/forms/${formId}/responses`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS (all tests pass).
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/app/forms/\[id\]/responses/ frontend/src/builder/components/BuilderView.tsx
