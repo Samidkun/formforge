@@ -11,6 +11,7 @@ use App\Models\Form;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class FormController extends Controller
@@ -115,7 +116,7 @@ class FormController extends Controller
                     'message' => 'Cannot publish form with invalid schema.',
                     'details' => $errors,
                 ],
-                'meta' => [],
+                'meta' => new \stdClass(),
             ], 422);
         }
 
@@ -127,30 +128,35 @@ class FormController extends Controller
                     'message' => 'Cannot publish form with zero fields.',
                     'details' => ['fields' => 'Form must contain at least one field.'],
                 ],
-                'meta' => [],
+                'meta' => new \stdClass(),
             ], 422);
         }
 
-        $nextVersionNo = ($form->formVersions()->max('version_no') ?? 0) + 1;
+        $result = DB::transaction(function () use ($form, $schema) {
+            $lockedForm = Form::where('id', $form->id)->lockForUpdate()->firstOrFail();
+            $nextVersionNo = ($lockedForm->formVersions()->max('version_no') ?? 0) + 1;
 
-        $version = $form->formVersions()->create([
-            'version_no' => $nextVersionNo,
-            'schema' => $schema,
-            'published_at' => now(),
-        ]);
+            $version = $lockedForm->formVersions()->create([
+                'version_no' => $nextVersionNo,
+                'schema' => $schema,
+                'published_at' => now(),
+            ]);
 
-        $form->update([
-            'status' => 'published',
-            'current_version_id' => $version->id,
-        ]);
+            $lockedForm->update([
+                'status' => 'published',
+                'current_version_id' => $version->id,
+            ]);
+
+            return [
+                'form' => $lockedForm->fresh(['currentVersion']),
+                'version' => $version,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'form' => $form->fresh(['currentVersion']),
-                'version' => $version,
-            ],
-            'meta' => [],
+            'data' => $result,
+            'meta' => new \stdClass(),
         ]);
     }
 }
