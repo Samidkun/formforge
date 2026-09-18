@@ -44,6 +44,7 @@ describe('useFormBuilder hook', () => {
     await act(async () => {});
 
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.loadError).toBe('Network error');
     expect(result.current.error).toBe('Network error');
   });
 
@@ -84,7 +85,7 @@ describe('useFormBuilder hook', () => {
     expect(result.current.saveStatus).toBe('saved');
   });
 
-  it('mengatur saveStatus error saat saveDraft gagal', async () => {
+  it('mengatur saveStatus error saat saveDraft gagal tanpa mengubah loadError', async () => {
     vi.spyOn(api, 'fetchForm').mockResolvedValueOnce({
       id: 'uuid-1',
       title: 'Test Form',
@@ -102,6 +103,8 @@ describe('useFormBuilder hook', () => {
     });
 
     expect(result.current.saveStatus).toBe('error');
-    expect(result.current.error).toBe('Failed to save');
+    expect(result.current.saveError).toBe('Failed to save');
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.error).toBeNull();
   });
 });

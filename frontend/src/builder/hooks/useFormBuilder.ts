@@ -8,15 +8,16 @@ export function useFormBuilder(formId: string, token?: string) {
   const [schema, dispatch] = useReducer(schemaReducer, emptySchema());
   const [title, setTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadForm() {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
       try {
         const form = await fetchForm(formId, token);
         if (cancelled) return;
@@ -27,7 +28,7 @@ export function useFormBuilder(formId: string, token?: string) {
         setIsLoading(false);
       } catch (err: unknown) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Gagal memuat form');
+        setLoadError(err instanceof Error ? err.message : 'Gagal memuat form');
         setIsLoading(false);
       }
     }
@@ -41,12 +42,13 @@ export function useFormBuilder(formId: string, token?: string) {
 
   const save = async () => {
     setSaveStatus('saving');
+    setSaveError(null);
     try {
       await saveDraft(formId, schema, token);
       setSaveStatus('saved');
     } catch (err: unknown) {
       setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan draft');
+      setSaveError(err instanceof Error ? err.message : 'Gagal menyimpan draft');
     }
   };
 
@@ -55,7 +57,9 @@ export function useFormBuilder(formId: string, token?: string) {
     dispatch,
     title,
     isLoading,
-    error,
+    loadError,
+    error: loadError,
+    saveError,
     saveStatus,
     save,
   };

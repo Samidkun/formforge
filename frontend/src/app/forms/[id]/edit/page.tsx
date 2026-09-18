@@ -6,12 +6,12 @@ import { useFormBuilder } from '@/builder/hooks/useFormBuilder';
 
 export default function EditFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { schema, dispatch, title, isLoading, error, saveStatus, save } = useFormBuilder(id);
+  const { schema, dispatch, title, isLoading, loadError, saveStatus, save } = useFormBuilder(id);
 
-  if (error) {
+  if (loadError) {
     return (
       <main className="flex h-dvh flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm text-[var(--color-accent-danger)]">{error}</p>
+        <p className="text-sm text-[var(--color-accent-danger)]">{loadError}</p>
       </main>
     );
   }
