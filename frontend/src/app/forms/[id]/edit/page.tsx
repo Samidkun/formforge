@@ -31,6 +31,8 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
 
   return (
     <BuilderView
+      id={id}
+      formId={id}
       schema={schema}
       dispatch={dispatch}
       title={title || `Form ${id}`}

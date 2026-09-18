@@ -199,4 +199,20 @@ describe('BuilderView component', () => {
 
     expect(screen.getByText('Cannot publish form with zero fields.')).toBeInTheDocument();
   });
+
+  it('menampilkan tab navigasi Builder (aktif) dan link Responses ke /forms/:id/responses', () => {
+    render(
+      <BuilderView
+        schema={mockSchema}
+        dispatch={vi.fn()}
+        title="Form Pendaftaran"
+        formId="form-abc"
+      />
+    );
+
+    expect(screen.getByText('Builder')).toBeInTheDocument();
+    const responsesLink = screen.getByRole('link', { name: /Responses/i });
+    expect(responsesLink).toBeInTheDocument();
+    expect(responsesLink).toHaveAttribute('href', '/forms/form-abc/responses');
+  });
 });

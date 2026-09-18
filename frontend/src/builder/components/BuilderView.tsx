@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { FieldPalette } from './FieldPalette';
 import { BuilderCanvas } from './BuilderCanvas';
 import { FieldConfigPanel } from './FieldConfigPanel';
@@ -12,9 +13,12 @@ interface BuilderViewProps {
   schema: Schema;
   dispatch: React.Dispatch<SchemaAction>;
   title: string;
+  id?: string;
+  formId?: string;
   slug?: string;
   status?: string;
   form?: {
+    id?: string;
     slug?: string;
     status?: string;
   };
@@ -30,6 +34,8 @@ export function BuilderView({
   schema,
   dispatch,
   title,
+  id,
+  formId,
   slug,
   status,
   form,
@@ -44,6 +50,7 @@ export function BuilderView({
   const [copied, setCopied] = useState<boolean>(false);
   const selectedField = schema.fields.find((f) => f.key === selectedKey) ?? null;
 
+  const formIdResolved = formId || form?.id || id;
   const currentSlug = slug || form?.slug;
   const currentStatus = status || form?.status || 'draft';
 
@@ -75,6 +82,20 @@ export function BuilderView({
       <header className="flex items-center justify-between border-b border-[var(--color-border-hairline)] px-4 py-2 bg-[var(--color-surface-primary)]">
         <div className="flex items-center gap-3">
           <h1 className="text-sm font-semibold">{title}</h1>
+          <nav aria-label="Tab navigasi" className="flex items-center gap-1 rounded-md bg-[var(--color-surface-elevated)] p-1">
+            <span
+              aria-current="page"
+              className="rounded px-2.5 py-1 text-xs font-semibold bg-[var(--color-accent-primary)] text-[var(--color-bg-primary)]"
+            >
+              Builder
+            </span>
+            <Link
+              href={formIdResolved ? `/forms/${formIdResolved}/responses` : '#'}
+              className="rounded px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Responses
+            </Link>
+          </nav>
           {currentStatus === 'published' && (
             <div className="flex items-center gap-2">
               <span className="rounded bg-[var(--color-accent-success)]/10 text-[var(--color-accent-success)] px-2 py-0.5 text-xs font-medium border border-[var(--color-accent-success)]/20">
