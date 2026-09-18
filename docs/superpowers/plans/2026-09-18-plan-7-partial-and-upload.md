@@ -58,7 +58,7 @@
   - Returns `201 Created` with JSON:
     `{ "success": true, "data": { "id": "uuid", "filename": "doc.pdf", "mime": "application/pdf", "size": 12345, "url": "/storage/uploads/..." } }`.
 
-- [ ] **Step 1: Write failing feature test for file upload endpoint and model**
+- [x] **Step 1: Write failing feature test for file upload endpoint and model**
 
 In `backend/tests/Feature/UploadApiTest.php`:
 ```php
@@ -139,12 +139,12 @@ class UploadApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to confirm failure**
+- [x] **Step 2: Run test to confirm failure**
 
 Run: `cd backend && php artisan test tests/Feature/UploadApiTest.php`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement migration, Upload model, and UploadController**
+- [x] **Step 3: Implement migration, Upload model, and UploadController**
 
 1. Migration `2026_09_18_000007_create_uploads_table.php`
 2. Model `Upload.php` (`protected $keyType = 'string'; public $incrementing = false;`)
@@ -153,12 +153,12 @@ Expected: FAIL.
 4. Register route in `backend/routes/api.php`:
    `Route::post('/uploads', [UploadController::class, 'store']);`
 
-- [ ] **Step 4: Run backend tests to verify pass**
+- [x] **Step 4: Run backend tests to verify pass**
 
 Run: `cd backend && php artisan test`
 Expected: 92+ tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/database/migrations/ backend/app/Models/ backend/app/Http/Controllers/Api/UploadController.php backend/routes/api.php backend/tests/Feature/UploadApiTest.php
