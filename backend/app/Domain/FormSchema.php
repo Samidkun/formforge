@@ -13,36 +13,66 @@ class FormSchema
      */
     public static function validate(array $data): array
     {
-        try {
-            self::fromArray($data);
-            return [];
-        } catch (\InvalidArgumentException $e) {
-            return ['schema' => $e->getMessage()];
+        if (!array_key_exists('fields', $data) || !is_array($data['fields'])) {
+            return ['schema' => 'Schema must contain a "fields" array.'];
         }
+
+        $errors = [];
+        $seenKeys = [];
+        $validOps = ['equals', 'not_equals', 'filled', 'empty', 'contains'];
+
+        foreach ($data['fields'] as $index => $field) {
+            if (!is_array($field)) {
+                $errors["fields.{$index}"] = 'Field must be an array.';
+                continue;
+            }
+
+            $key = $field['key'] ?? null;
+            if (!is_string($key) || $key === '') {
+                $errors["fields.{$index}.key"] = 'Every field needs a non-empty string key.';
+                continue;
+            }
+
+            if (in_array($key, $seenKeys, true)) {
+                $errors["fields.{$index}.key"] = "Duplicate field key: {$key}";
+            }
+
+            if (!isset($field['type']) || !is_string($field['type']) || FieldType::tryFrom($field['type']) === null) {
+                $errors["fields.{$index}.type"] = "Unknown field type: " . (is_scalar($field['type'] ?? null) ? $field['type'] : gettype($field['type'] ?? null));
+            }
+
+            $label = $field['label'] ?? null;
+            if (!is_string($label) || trim($label) === '') {
+                $errors["fields.{$index}.label"] = "Field {$key} needs a non-empty label.";
+            }
+
+            if (isset($field['logic'])) {
+                if (!is_array($field['logic']) || !isset($field['logic']['showIf']) || !is_array($field['logic']['showIf'])) {
+                    $errors["fields.{$index}.logic"] = 'Logic must contain a valid showIf object.';
+                } else {
+                    $showIf = $field['logic']['showIf'];
+                    $refField = $showIf['field'] ?? null;
+                    $op = $showIf['op'] ?? null;
+
+                    if (!$refField || !in_array($refField, $seenKeys, true)) {
+                        $errors["fields.{$index}.logic"] = 'Conditional logic can only reference preceding fields in the form.';
+                    } elseif (!$op || !in_array($op, $validOps, true)) {
+                        $errors["fields.{$index}.logic"] = 'Invalid conditional logic operator.';
+                    }
+                }
+            }
+
+            $seenKeys[] = $key;
+        }
+
+        return $errors;
     }
 
     public static function fromArray(array $data): self
     {
-        if (!array_key_exists('fields', $data) || !is_array($data['fields'])) {
-            throw new \InvalidArgumentException('Schema must contain a "fields" array.');
-        }
-
-        $seen = [];
-        foreach ($data['fields'] as $f) {
-            if (!isset($f['key']) || !is_string($f['key']) || $f['key'] === '') {
-                throw new \InvalidArgumentException('Every field needs a non-empty string key.');
-            }
-            if (isset($seen[$f['key']])) {
-                throw new \InvalidArgumentException("Duplicate field key: {$f['key']}");
-            }
-            $seen[$f['key']] = true;
-
-            if (!isset($f['type']) || !is_string($f['type']) || FieldType::tryFrom($f['type']) === null) {
-                throw new \InvalidArgumentException("Unknown field type: " . (is_scalar($f['type'] ?? null) ? $f['type'] : gettype($f['type'] ?? null)));
-            }
-            if (!isset($f['label']) || !is_string($f['label']) || trim($f['label']) === '') {
-                throw new \InvalidArgumentException("Field {$f['key']} needs a non-empty label.");
-            }
+        $errors = self::validate($data);
+        if (!empty($errors)) {
+            throw new \InvalidArgumentException(reset($errors));
         }
 
         return new self(array_values($data['fields']));

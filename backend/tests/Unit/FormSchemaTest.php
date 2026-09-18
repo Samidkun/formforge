@@ -178,4 +178,113 @@ class FormSchemaTest extends TestCase
         $errors = FormSchema::validate(['fields' => 'invalid']);
         $this->assertArrayHasKey('schema', $errors);
     }
+
+    public function test_rejects_logic_referencing_unknown_field(): void
+    {
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'f_1',
+                    'type' => 'text',
+                    'label' => 'Name',
+                    'logic' => [
+                        'showIf' => ['field' => 'f_99', 'op' => 'filled'],
+                    ],
+                ],
+            ],
+        ];
+
+        $errors = FormSchema::validate($schema);
+        $this->assertArrayHasKey('fields.0.logic', $errors);
+    }
+
+    public function test_rejects_logic_referencing_self_or_forward_field(): void
+    {
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'f_1',
+                    'type' => 'text',
+                    'label' => 'First',
+                    'logic' => [
+                        'showIf' => ['field' => 'f_2', 'op' => 'filled'],
+                    ],
+                ],
+                [
+                    'key' => 'f_2',
+                    'type' => 'text',
+                    'label' => 'Second',
+                ],
+            ],
+        ];
+
+        $errors = FormSchema::validate($schema);
+        $this->assertArrayHasKey('fields.0.logic', $errors);
+    }
+
+    public function test_accepts_valid_backward_logic_reference(): void
+    {
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'f_1',
+                    'type' => 'choice',
+                    'label' => 'Role',
+                    'options' => ['Student', 'Teacher'],
+                ],
+                [
+                    'key' => 'f_2',
+                    'type' => 'text',
+                    'label' => 'School Name',
+                    'logic' => [
+                        'showIf' => ['field' => 'f_1', 'op' => 'equals', 'value' => 'Student'],
+                    ],
+                ],
+            ],
+        ];
+
+        $errors = FormSchema::validate($schema);
+        $this->assertEmpty($errors);
+    }
+
+    public function test_rejects_logic_with_invalid_operator(): void
+    {
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'f_1',
+                    'type' => 'text',
+                    'label' => 'Name',
+                ],
+                [
+                    'key' => 'f_2',
+                    'type' => 'text',
+                    'label' => 'Details',
+                    'logic' => [
+                        'showIf' => ['field' => 'f_1', 'op' => 'invalid_op'],
+                    ],
+                ],
+            ],
+        ];
+
+        $errors = FormSchema::validate($schema);
+        $this->assertArrayHasKey('fields.1.logic', $errors);
+    }
+
+    public function test_rejects_logic_with_malformed_show_if(): void
+    {
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'f_1',
+                    'type' => 'text',
+                    'label' => 'Name',
+                    'logic' => 'not-an-array',
+                ],
+            ],
+        ];
+
+        $errors = FormSchema::validate($schema);
+        $this->assertArrayHasKey('fields.0.logic', $errors);
+    }
 }
