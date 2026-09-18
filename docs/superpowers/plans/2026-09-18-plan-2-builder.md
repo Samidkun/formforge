@@ -48,7 +48,7 @@
   - `App\Models\Workspace::forms(): HasMany`.
   - `App\Domain\FormSlug::base(string $title): string` dan `FormSlug::resolve(string $title, callable $taken): string`.
 
-- [ ] **Step 1: Tulis test slug yang gagal**
+- [x] **Step 1: Tulis test slug yang gagal**
 
 ```php
 <?php
@@ -94,12 +94,12 @@ class FormSlugTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan GAGAL**
+- [x] **Step 2: Jalankan test, pastikan GAGAL**
 
 Run: `cd backend && php artisan test --filter=FormSlugTest`
 Expected: FAIL — `Class "App\Domain\FormSlug" not found`.
 
-- [ ] **Step 3: Implementasi `FormSlug`**
+- [x] **Step 3: Implementasi `FormSlug`**
 
 ```php
 <?php
@@ -135,12 +135,12 @@ final class FormSlug
 }
 ```
 
-- [ ] **Step 4: Jalankan test, pastikan PASS**
+- [x] **Step 4: Jalankan test, pastikan PASS**
 
 Run: `cd backend && php artisan test --filter=FormSlugTest`
 Expected: PASS (6 test).
 
-- [ ] **Step 5: Tulis test model yang gagal**
+- [x] **Step 5: Tulis test model yang gagal**
 
 ```php
 <?php
@@ -216,12 +216,12 @@ class FormModelTest extends TestCase
 }
 ```
 
-- [ ] **Step 6: Jalankan test, pastikan GAGAL**
+- [x] **Step 6: Jalankan test, pastikan GAGAL**
 
 Run: `cd backend && php artisan test --filter=FormModelTest`
 Expected: FAIL — `relation "forms" does not exist` (migrasi & model belum ada).
 
-- [ ] **Step 7: Tulis migrasi**
+- [x] **Step 7: Tulis migrasi**
 
 ```php
 <?php
@@ -253,7 +253,7 @@ return new class extends Migration {
 };
 ```
 
-- [ ] **Step 8: Tulis model `Form` + relasi di `Workspace`**
+- [x] **Step 8: Tulis model `Form` + relasi di `Workspace`**
 
 ```php
 <?php
@@ -285,12 +285,12 @@ Tambahkan ke `backend/app/Models/Workspace.php` (import `HasMany` di atas):
     public function forms(): HasMany { return $this->hasMany(Form::class); }
 ```
 
-- [ ] **Step 9: Jalankan test, pastikan PASS**
+- [x] **Step 9: Jalankan test, pastikan PASS**
 
 Run: `cd backend && php artisan test --filter="FormSlugTest|FormModelTest"`
 Expected: PASS (6 + 5 = 11 test).
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add backend/database/migrations/2026_09_18_000001_create_forms_table.php \
