@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FormController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Route;
@@ -9,7 +10,15 @@ Route::get('/health', HealthController::class);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/forms', [FormController::class, 'index']);
+    Route::post('/forms', [FormController::class, 'store']);
+    Route::get('/forms/{form}', [FormController::class, 'show']);
+    Route::patch('/forms/{form}', [FormController::class, 'update']);
+    Route::delete('/forms/{form}', [FormController::class, 'destroy']);
+});
 
 // Test-only route (ruling T6-2): the 403 envelope handler in bootstrap/app.php
 // (AuthorizationException / AccessDeniedHttpException) had no test. This route
