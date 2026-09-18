@@ -1055,9 +1055,28 @@ fi
 
 - [ ] **Step 3: Samakan `.github/workflows/ci.yml` (job php)**
 
-Job `php` harus: (a) `if:` mendeteksi `backend/composer.json` (bukan root), (b) pakai
+Job `php` harus: (a) mendeteksi `backend/composer.json` (bukan root), (b) pakai
 `defaults.run.working-directory: backend` (atau `cd backend` di tiap step) supaya `composer install`
 + `php artisan test` benar. Gate list harus tetap sinkron dengan `local-ci.sh` (selftest drift check).
+
+> **Ruling T6-3 (KRITIS — `hashFiles` ILEGAL di job-level `if`):** fix pertama (`if: hashFiles('backend/composer.json') != ''`)
+> **masih salah**. `hashFiles()` hanya tersedia di `jobs.<job_id>.steps.*` — **bukan** di `jobs.<job_id>.if`.
+> Dipakai di job-level `if`, **seluruh file workflow jadi INVALID**: GitHub menolaknya saat parse,
+> sehingga **tidak ada job yang jalan sama sekali** (bukan cuma php — node/python/e2e/web-quality juga mati).
+> Ini kelas bug yang sama dengan gate mati, naik satu level: file CI-nya sendiri jadi no-op.
+> **Bukti definitif (actionlint 1.7.7):** `calling function "hashFiles" is not allowed here` di 6 titik
+> (baris 18, 48, 66×2, 82×2, 103). Konfirmasi docs resmi: `jobs.<job_id>.if` hanya punya konteks
+> `github, needs, vars, inputs` (tanpa `hashFiles`).
+>
+> **Fix yang benar:** deteksi stack SEKALI di **step-level** (step `if:`/`run:` boleh pakai `hashFiles`),
+> ekspos sebagai **job output**, lalu gate tiap job stack pakai `needs.detect.outputs.X == 'true'`
+> (job-level `if` boleh baca `needs`). Job `detect` menulis output via `$GITHUB_OUTPUT`.
+> Ini juga **menghapus akar bug monorepo** (T6-1) di CI: `detect` menentukan `php_dir` (root vs backend)
+> dan job `php` memakainya sebagai `working-directory`.
+>
+> **Regresi yang dicegah:** tambahkan cek actionlint ke `selftest.sh` (SOP) supaya kelas bug ini
+> ketangkap — selama ini selftest cuma membandingkan **nama** gate di `local-ci.sh` vs `ci.yml`,
+> sehingga bilang "in sync, ALL GREEN" padahal `ci.yml` invalid.
 
 - [ ] **Step 4: Jalankan gate penuh + verifikasi**
 
