@@ -38,7 +38,7 @@
 - Consumes: `App\Models\Form`, `App\Models\Submission`, `App\Models\SubmissionAnswer`
 - Produces: `GET /api/forms/{id}/responses` returning paginated submissions with answers in standard envelope.
 
-- [ ] **Step 1: Write failing feature test for responses list**
+- [x] **Step 1: Write failing feature test for responses list**
 
 Create `backend/tests/Feature/ResponseApiTest.php`:
 ```php
@@ -187,12 +187,12 @@ class ResponseApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd backend && php artisan test tests/Feature/ResponseApiTest.php`
 Expected: FAIL (404 / Route not found).
 
-- [ ] **Step 3: Implement ResponseController::index and route**
+- [x] **Step 3: Implement ResponseController::index and route**
 
 Create `backend/app/Http/Controllers/Api/ResponseController.php`:
 ```php
@@ -245,12 +245,12 @@ Add route in `backend/routes/api.php`:
 Route::get('/forms/{id}/responses', [ResponseController::class, 'index']);
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd backend && php artisan test tests/Feature/ResponseApiTest.php`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/Http/Controllers/Api/ResponseController.php backend/routes/api.php backend/tests/Feature/ResponseApiTest.php
