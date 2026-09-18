@@ -105,7 +105,7 @@ describe('API Client — fetchForm & saveDraft', () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer my-auth-token',
-          'Content-Type': 'application/json',
+          Accept: 'application/json',
         }),
       })
     );
@@ -209,7 +209,7 @@ describe('API Client — fetchForm & saveDraft', () => {
       expect.stringContaining('/api/forms/form-1/responses?status=complete'),
       expect.objectContaining({
         headers: expect.objectContaining({
-          'Content-Type': 'application/json',
+          Accept: 'application/json',
         }),
       })
     );

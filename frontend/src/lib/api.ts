@@ -90,12 +90,48 @@ export async function publishForm(
   return json;
 }
 
+export interface SubmissionAnswer {
+  id?: number;
+  submission_id?: string;
+  field_key: string;
+  value: any;
+}
+
+export interface SubmissionItem {
+  id: string;
+  form_id?: string;
+  form_version_id?: string;
+  session_id: string;
+  status: 'partial' | 'complete' | string;
+  started_at: string | null;
+  completed_at: string | null;
+  meta?: Record<string, any> | null;
+  answers: SubmissionAnswer[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ResponsesMeta {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+}
+
+export interface ResponsesResult {
+  success: boolean;
+  data: {
+    items: SubmissionItem[];
+  };
+  meta: ResponsesMeta;
+}
+
 export async function getResponses(
   formId: string,
   status?: string,
   page: number = 1,
   token?: string
-): Promise<{ data: { items: any[] }; meta: { total: number; current_page: number; last_page: number; per_page: number } }> {
+): Promise<ResponsesResult> {
   const params = new URLSearchParams();
   if (status && status !== 'all') params.set('status', status);
   if (page > 1) params.set('page', String(page));
@@ -103,7 +139,7 @@ export async function getResponses(
   const query = params.toString() ? `?${params.toString()}` : '';
   const res = await fetch(`${API_BASE}/api/forms/${formId}/responses${query}`, {
     headers: {
-      'Content-Type': 'application/json',
+      Accept: 'application/json',
       ...authHeaders(token),
     },
   });
@@ -116,7 +152,10 @@ export async function getResponses(
 
 export function exportResponsesUrl(formId: string, token?: string): string {
   const resolvedToken = token !== undefined ? token : (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '');
-  return `${API_BASE}/api/forms/${formId}/responses/export?token=${resolvedToken || ''}`;
+  if (resolvedToken) {
+    return `${API_BASE}/api/forms/${formId}/responses/export?token=${encodeURIComponent(resolvedToken)}`;
+  }
+  return `${API_BASE}/api/forms/${formId}/responses/export`;
 }
 
 export const api = {
