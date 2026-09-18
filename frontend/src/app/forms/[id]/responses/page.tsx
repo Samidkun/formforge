@@ -107,11 +107,26 @@ export default function ResponsesPage({ params }: PageProps) {
     setPage(1);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!id) return;
-    const url = api.exportResponsesUrl(id);
-    if (typeof window !== 'undefined') {
-      window.open(url, '_blank');
+    try {
+      const url = api.exportResponsesUrl(id);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Gagal mengunduh CSV');
+      const blob = await res.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `form-responses.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err: any) {
+      setError(err?.message || 'Gagal mengekspor CSV');
     }
   };
 

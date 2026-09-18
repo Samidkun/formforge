@@ -87,7 +87,12 @@ class ResponseController extends Controller
                     ];
 
                     foreach ($fields as $f) {
-                        $row[] = $answerMap[$f['key']] ?? '';
+                        $val = $answerMap[$f['key']] ?? '';
+                        // Mitigate formula injection for spreadsheet software
+                        if (is_string($val) && preg_match('/^[=+\-@]/', $val)) {
+                            $val = "'" . $val;
+                        }
+                        $row[] = $val;
                     }
 
                     fputcsv($handle, $row);
