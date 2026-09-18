@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FormController;
 use App\Http\Controllers\Api\ResponseController;
@@ -22,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/forms/{id}/publish', [FormController::class, 'publish']);
     Route::get('/forms/{id}/responses', [ResponseController::class, 'index']);
     Route::get('/forms/{id}/responses/export', [ResponseController::class, 'export']);
+    Route::get('/forms/{id}/analytics', [AnalyticsController::class, 'show']);
 });
 
 // Test-only route (ruling T6-2): the 403 envelope handler in bootstrap/app.php
