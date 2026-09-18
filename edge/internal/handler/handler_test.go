@@ -4,18 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 type mockStore struct {
-	formSlug     string
-	formTitle    string
-	versionID    string
-	schemaJSON   string
-	settingsJSON string
-	published    bool
+	formSlug          string
+	formTitle         string
+	versionID         string
+	schemaJSON        string
+	settingsJSON      string
+	published         bool
+	lastRecordedEvent *EventRecord
 }
 
 func (m *mockStore) GetPublishedForm(ctx context.Context, slug string) (*PublishedFormData, error) {
@@ -37,6 +40,7 @@ func (m *mockStore) UpsertSubmission(ctx context.Context, sub *SubmissionRecord,
 }
 
 func (m *mockStore) RecordEvent(ctx context.Context, event *EventRecord) error {
+	m.lastRecordedEvent = event
 	return nil
 }
 
@@ -197,17 +201,108 @@ func TestSubmitForm_InvalidJSON(t *testing.T) {
 	}
 }
 
-func TestEventRoute(t *testing.T) {
-	store := &mockStore{}
+func TestEvent_ValidEvents(t *testing.T) {
+	types := []string{"view", "start", "complete", "field_focus", "field_blur"}
+	for _, evtType := range types {
+		t.Run(evtType, func(t *testing.T) {
+			store := &mockStore{
+				formSlug:  "test-slug",
+				published: true,
+			}
+			h := NewHandler(store)
+
+			var body string
+			if strings.HasPrefix(evtType, "field_") {
+				body = fmt.Sprintf(`{"session_id":"a3b4c5d6-0000-0000-0000-000000000001","type":"%s","field_key":"email"}`, evtType)
+			} else {
+				body = fmt.Sprintf(`{"session_id":"a3b4c5d6-0000-0000-0000-000000000001","type":"%s"}`, evtType)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/f/test-slug/event", bytes.NewBufferString(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			if w.Code != http.StatusNoContent {
+				t.Fatalf("expected 204, got %d: %s", w.Code, w.Body.String())
+			}
+
+			if store.lastRecordedEvent == nil {
+				t.Fatalf("expected RecordEvent to be called")
+			}
+			if store.lastRecordedEvent.FormID != "00000000-0000-0000-0000-000000000001" {
+				t.Errorf("expected form ID 00000000-0000-0000-0000-000000000001, got %s", store.lastRecordedEvent.FormID)
+			}
+			if store.lastRecordedEvent.SessionID != "a3b4c5d6-0000-0000-0000-000000000001" {
+				t.Errorf("expected session ID a3b4c5d6-0000-0000-0000-000000000001, got %s", store.lastRecordedEvent.SessionID)
+			}
+			if store.lastRecordedEvent.Type != evtType {
+				t.Errorf("expected event type %s, got %s", evtType, store.lastRecordedEvent.Type)
+			}
+			if strings.HasPrefix(evtType, "field_") {
+				if store.lastRecordedEvent.FieldKey == nil || *store.lastRecordedEvent.FieldKey != "email" {
+					t.Errorf("expected field_key email, got %v", store.lastRecordedEvent.FieldKey)
+				}
+			}
+		})
+	}
+}
+
+func TestEvent_InvalidSessionID(t *testing.T) {
+	store := &mockStore{
+		formSlug:  "test-slug",
+		published: true,
+	}
 	h := NewHandler(store)
 
-	req := httptest.NewRequest(http.MethodPost, "/f/survey/event", bytes.NewBufferString(`{}`))
+	body := `{"session_id":"invalid-session-uuid","type":"view"}`
+	req := httptest.NewRequest(http.MethodPost, "/f/test-slug/event", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
 	h.ServeHTTP(w, req)
 
-	if w.Code != http.StatusNoContent {
-		t.Fatalf("expected 204, got %d", w.Code)
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", w.Code)
+	}
+}
+
+func TestEvent_InvalidType(t *testing.T) {
+	store := &mockStore{
+		formSlug:  "test-slug",
+		published: true,
+	}
+	h := NewHandler(store)
+
+	body := `{"session_id":"a3b4c5d6-0000-0000-0000-000000000001","type":"invalid_type"}`
+	req := httptest.NewRequest(http.MethodPost, "/f/test-slug/event", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", w.Code)
+	}
+}
+
+func TestEvent_FormNotFound(t *testing.T) {
+	store := &mockStore{
+		formSlug:  "test-slug",
+		published: false,
+	}
+	h := NewHandler(store)
+
+	body := `{"session_id":"a3b4c5d6-0000-0000-0000-000000000001","type":"view"}`
+	req := httptest.NewRequest(http.MethodPost, "/f/test-slug/event", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
 	}
 }
 

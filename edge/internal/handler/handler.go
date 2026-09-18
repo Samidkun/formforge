@@ -45,6 +45,12 @@ type EventRecord struct {
 	FieldKey  *string
 }
 
+type EventPayload struct {
+	SessionID string  `json:"session_id"`
+	Type      string  `json:"type"`
+	FieldKey  *string `json:"field_key"`
+}
+
 type Store interface {
 	GetPublishedForm(ctx context.Context, slug string) (*PublishedFormData, error)
 	UpsertSubmission(ctx context.Context, sub *SubmissionRecord, answers []AnswerRecord) (string, error)
@@ -95,7 +101,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if parts[1] == "event" && r.Method == http.MethodPost {
-			w.WriteHeader(http.StatusNoContent)
+			h.handleEvent(w, r, slug)
 			return
 		}
 	}
@@ -254,6 +260,69 @@ func (h *Handler) handleSubmit(w http.ResponseWriter, r *http.Request, slug stri
 		},
 		"meta": map[string]string{},
 	})
+}
+
+func (h *Handler) handleEvent(w http.ResponseWriter, r *http.Request, slug string) {
+	form, err := h.store.GetPublishedForm(r.Context(), slug)
+	if errors.Is(err, ErrNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "NOT_FOUND", "message": "Form not found."},
+		})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "SERVER_ERROR", "message": err.Error()},
+		})
+		return
+	}
+
+	var payload EventPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "BAD_REQUEST", "message": "Invalid JSON body."},
+		})
+		return
+	}
+
+	if !uuidRegex.MatchString(payload.SessionID) {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "VALIDATION_FAILED", "message": "session_id must be a valid UUID."},
+		})
+		return
+	}
+
+	switch payload.Type {
+	case "view", "start", "complete", "field_focus", "field_blur":
+		// valid event type
+	default:
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "VALIDATION_FAILED", "message": "invalid event type."},
+		})
+		return
+	}
+
+	record := &EventRecord{
+		FormID:    form.FormID,
+		SessionID: payload.SessionID,
+		Type:      payload.Type,
+		FieldKey:  payload.FieldKey,
+	}
+
+	if err := h.store.RecordEvent(r.Context(), record); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "SERVER_ERROR", "message": err.Error()},
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {

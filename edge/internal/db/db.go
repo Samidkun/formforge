@@ -136,6 +136,10 @@ func (p *PostgresStore) UpsertSubmission(ctx context.Context, sub *handler.Submi
 }
 
 func (p *PostgresStore) RecordEvent(ctx context.Context, event *handler.EventRecord) error {
-	// Table form_events is created in milestone 6 for analytics, placeholder for now
+	query := `INSERT INTO form_events (form_id, session_id, type, field_key, created_at) VALUES ($1, $2, $3, $4, NOW())`
+	_, err := p.db.ExecContext(ctx, query, event.FormID, event.SessionID, event.Type, event.FieldKey)
+	if err != nil {
+		return fmt.Errorf("failed to insert form event: %w", err)
+	}
 	return nil
 }
