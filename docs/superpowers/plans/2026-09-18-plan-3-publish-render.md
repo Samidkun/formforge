@@ -1894,7 +1894,7 @@ git commit -m "feat(frontend): implement public form renderer for 9 field types 
   - `go:vet` and `go:test` gates in `scripts/local-ci.sh`
   - Playwright test verifying publish in builder and form submission in public renderer.
 
-- [ ] **Step 1: Update scripts/local-ci.sh to add Go gates**
+- [x] **Step 1: Update scripts/local-ci.sh to add Go gates**
 
 Add detection and gates in `scripts/local-ci.sh`:
 ```bash
@@ -1910,7 +1910,7 @@ if [ "${IS_GO:-0}" = 1 ]; then
 fi
 ```
 
-- [ ] **Step 2: Create Playwright E2E integration test**
+- [x] **Step 2: Create Playwright E2E integration test**
 
 Create `frontend/e2e/publish-and-submit.spec.ts`:
 Test verifies end-to-end flow:
@@ -1920,7 +1920,7 @@ Test verifies end-to-end flow:
 4. Clicks Submit.
 5. Verifies Thank You / Success screen appears.
 
-- [ ] **Step 3: Run local-ci gates and Playwright tests**
+- [x] **Step 3: Run local-ci gates and Playwright tests**
 
 Run: `bash scripts/local-ci.sh --tier t0 --fast`
 Expected: ALL GREEN including `go:vet`, `go:test`, `node:*`, `php:*`.
@@ -1928,7 +1928,7 @@ Expected: ALL GREEN including `go:vet`, `go:test`, `node:*`, `php:*`.
 Run: `cd frontend && npx playwright test e2e/publish-and-submit.spec.ts`
 Expected: 1 passed.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/local-ci.sh frontend/e2e/publish-and-submit.spec.ts
