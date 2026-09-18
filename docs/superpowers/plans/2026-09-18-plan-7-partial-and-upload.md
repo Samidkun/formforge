@@ -225,7 +225,7 @@ git commit -m "feat(edge): accept canonical 'file' type in submission validation
   - On upload success, stores uploaded file URL / metadata in field value.
   - Allows removing / clearing the uploaded file.
 
-- [ ] **Step 1: Write failing unit tests for uploadFile and FormRenderer file upload**
+- [x] **Step 1: Write failing unit tests for uploadFile and FormRenderer file upload**
 
 In `frontend/src/lib/api.test.ts`:
 - Test `uploadFile` sends FormData to `/api/uploads`.
@@ -235,12 +235,12 @@ In `frontend/src/renderer/FormRenderer.test.tsx`:
 - Test displays uploaded filename and clear button.
 - Test handles upload failure cleanly with error message.
 
-- [ ] **Step 2: Run tests to confirm failure**
+- [x] **Step 2: Run tests to confirm failure**
 
 Run: `cd frontend && npm test src/lib/api.test.ts src/renderer/FormRenderer.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement uploadFile and file field upload in FormRenderer**
+- [x] **Step 3: Implement uploadFile and file field upload in FormRenderer**
 
 - In `frontend/src/lib/api.ts`: implement `uploadFile(file: File): Promise<{ id: string; filename: string; url: string }>`.
 - In `frontend/src/renderer/FormRenderer.tsx`:
@@ -248,12 +248,12 @@ Expected: FAIL.
   - Show upload progress/spinner.
   - Provide "Hapus" (remove) button when file is uploaded.
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 Run: `cd frontend && npm test`
 Expected: All Vitest tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/lib/api.ts frontend/src/lib/api.test.ts frontend/src/renderer/
