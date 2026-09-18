@@ -161,7 +161,7 @@ git commit -m "feat(backend): add migrations and models for form_events and form
 - Consumes: `POST /f/:slug/event` with JSON `{ session_id, type, field_key? }`
 - Produces: Validates `session_id` (UUID) and event `type`, looks up published form, and inserts row into `form_events`. Returns `204 No Content`.
 
-- [ ] **Step 1: Write failing Go tests for event intake**
+- [x] **Step 1: Write failing Go tests for event intake**
 
 In `edge/internal/handler/handler_test.go`:
 - Test `POST /f/test-slug/event` with valid `view` event calls `RecordEvent` with expected parameters and returns 204.
@@ -169,12 +169,12 @@ In `edge/internal/handler/handler_test.go`:
 - Test `POST /f/test-slug/event` with invalid `type` returns 422.
 - Test `POST /f/test-slug/event` for non-existent form returns 404.
 
-- [ ] **Step 2: Run Go tests to confirm failure**
+- [x] **Step 2: Run Go tests to confirm failure**
 
 Run: `cd edge && go test ./internal/handler`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement handler and database record execution**
+- [x] **Step 3: Implement handler and database record execution**
 
 In `edge/internal/handler/handler.go`:
 - Define `EventPayload`: `SessionID string`, `Type string`, `FieldKey *string`.
@@ -190,12 +190,12 @@ In `edge/internal/db/db.go`:
 - Implement `RecordEvent` with SQL query:
   `INSERT INTO form_events (form_id, session_id, type, field_key, created_at) VALUES ($1, $2, $3, $4, NOW())`.
 
-- [ ] **Step 4: Run Go tests to verify pass**
+- [x] **Step 4: Run Go tests to verify pass**
 
 Run: `cd edge && go test -v ./... && go vet ./...`
 Expected: PASS with 0 errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add edge/internal/handler/ edge/internal/db/
