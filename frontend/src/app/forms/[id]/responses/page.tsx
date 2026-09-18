@@ -148,6 +148,12 @@ export default function ResponsesPage({ params }: PageProps) {
             >
               Responses
             </span>
+            <Link
+              href={`/forms/${id || ''}/analytics`}
+              className="rounded px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Analytics
+            </Link>
           </nav>
         </div>
       </header>

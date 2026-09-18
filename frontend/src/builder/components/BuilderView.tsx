@@ -95,6 +95,12 @@ export function BuilderView({
             >
               Responses
             </Link>
+            <Link
+              href={formIdResolved ? `/forms/${formIdResolved}/analytics` : '#'}
+              className="rounded px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Analytics
+            </Link>
           </nav>
           {currentStatus === 'published' && (
             <div className="flex items-center gap-2">

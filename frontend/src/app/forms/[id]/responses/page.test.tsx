@@ -57,6 +57,10 @@ describe('ResponsesPage', () => {
     expect(builderLink.getAttribute('href')).toBe('/forms/f-1/edit');
 
     expect(screen.getByText('Responses')).toBeDefined();
+
+    const analyticsLink = screen.getByRole('link', { name: /Analytics/i });
+    expect(analyticsLink).toBeDefined();
+    expect(analyticsLink.getAttribute('href')).toBe('/forms/f-1/analytics');
   });
 
   it('calls api.getResponses with new status when filter changes', async () => {

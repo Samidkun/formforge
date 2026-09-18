@@ -202,7 +202,7 @@ describe('BuilderView component', () => {
     expect(screen.getByText('Cannot publish form with zero fields.')).toBeInTheDocument();
   });
 
-  it('menampilkan tab navigasi Builder (aktif) dan link Responses ke /forms/:id/responses', () => {
+  it('menampilkan tab navigasi Builder (aktif), link Responses, dan link Analytics ke /forms/:id/analytics', () => {
     render(
       <BuilderView
         schema={mockSchema}
@@ -216,6 +216,9 @@ describe('BuilderView component', () => {
     const responsesLink = screen.getByRole('link', { name: /Responses/i });
     expect(responsesLink).toBeInTheDocument();
     expect(responsesLink).toHaveAttribute('href', '/forms/form-abc/responses');
+    const analyticsLink = screen.getByRole('link', { name: /Analytics/i });
+    expect(analyticsLink).toBeInTheDocument();
+    expect(analyticsLink).toHaveAttribute('href', '/forms/form-abc/analytics');
   });
 
   it('meneruskan blok logic dari FieldConfigPanel ke schema state (end-to-end via reducer)', async () => {
