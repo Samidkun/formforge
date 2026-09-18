@@ -735,7 +735,7 @@ git commit -m "feat(backend): add forms CRUD api with ownership policy"
   - `frontend/src/builder/fieldTypes.ts` → `FIELD_TYPES: readonly FieldType[]` (9, urut) dan `FIELD_LABELS: Record<FieldType, string>`.
   - `FieldPalette` component: `{ onAdd(type: FieldType): void }` — 9 tombol, tiap tombol `aria-label="Tambah field {label}"`.
 
-- [ ] **Step 1: Scaffold app + pin dependency eksak**
+- [x] **Step 1: Scaffold app + pin dependency eksak**
 
 Buat `frontend/package.json` (SEMUA versi eksak — tanpa `^`; alasan: determinisme, Plan 1 ruling T2-1):
 
@@ -780,7 +780,7 @@ Buat `frontend/package.json` (SEMUA versi eksak — tanpa `^`; alasan: determini
 
 > **CATATAN determinisme (ruling P2-2):** TypeScript di-pin **5.9.3** (bukan 7.0.2). TS 7 adalah port compiler ke Go; ekosistem plugin/lint belum sepenuhnya pindah, dan project portofolio tidak boleh menukar stabilitas tooling demi nomor versi tertinggi. Bila `npm install` mengeluh peer-dep, turunkan `@types/node` ke versi 22 terbaru yang cocok — jangan naikkan TypeScript.
 
-- [ ] **Step 2: Install + commit lockfile**
+- [x] **Step 2: Install + commit lockfile**
 
 Run:
 ```bash
@@ -789,7 +789,7 @@ test -f package-lock.json && echo "LOCKFILE OK"
 ```
 Expected: `LOCKFILE OK`. Lockfile **wajib** di-commit (gate `node:audit` gagal tanpa itu).
 
-- [ ] **Step 3: Config files**
+- [x] **Step 3: Config files**
 
 `frontend/tsconfig.json`:
 ```json
@@ -857,7 +857,7 @@ export default defineConfig({
 import '@testing-library/jest-dom/vitest';
 ```
 
-- [ ] **Step 4: Design token Rukun (spec §6, nilai verbatim) + layout**
+- [x] **Step 4: Design token Rukun (spec §6, nilai verbatim) + layout**
 
 `frontend/src/app/globals.css`:
 ```css
@@ -925,7 +925,7 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 5: Tulis tipe + daftar field type (pure data)**
+- [x] **Step 5: Tulis tipe + daftar field type (pure data)**
 
 `frontend/src/builder/types.ts`:
 ```ts
@@ -967,7 +967,7 @@ export const FIELD_LABELS: Record<FieldType, string> = {
 };
 ```
 
-- [ ] **Step 6: Tulis test palette yang gagal**
+- [x] **Step 6: Tulis test palette yang gagal**
 
 ```tsx
 // frontend/src/builder/components/FieldPalette.test.tsx
@@ -999,12 +999,12 @@ describe('FieldPalette', () => {
 });
 ```
 
-- [ ] **Step 7: Jalankan test, pastikan GAGAL**
+- [x] **Step 7: Jalankan test, pastikan GAGAL**
 
 Run: `cd frontend && npm test`
 Expected: FAIL — `Failed to resolve import "./FieldPalette"`.
 
-- [ ] **Step 8: Implementasi `FieldPalette`**
+- [x] **Step 8: Implementasi `FieldPalette`**
 
 ```tsx
 // frontend/src/builder/components/FieldPalette.tsx
@@ -1039,7 +1039,7 @@ export function FieldPalette({ onAdd }: { onAdd: (type: FieldType) => void }) {
 }
 ```
 
-- [ ] **Step 9: Halaman builder (shell) + `GET /forms/new/edit`**
+- [x] **Step 9: Halaman builder (shell) + `GET /forms/new/edit`**
 
 `frontend/src/app/forms/[id]/edit/page.tsx`:
 ```tsx
@@ -1066,7 +1066,7 @@ export default async function EditFormPage({ params }: { params: Promise<{ id: s
 }
 ```
 
-- [ ] **Step 10: `.env.example` + `.gitignore`, lalu lint/typecheck/test**
+- [x] **Step 10: `.env.example` + `.gitignore`, lalu lint/typecheck/test**
 
 `frontend/.env.example`:
 ```bash
@@ -1091,7 +1091,7 @@ cd frontend && npx tsc --noEmit && npm run lint && npm test
 ```
 Expected: typecheck bersih, lint bersih, 3 test PASS.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add frontend
