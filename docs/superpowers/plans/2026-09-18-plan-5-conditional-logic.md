@@ -50,7 +50,7 @@
   - Rejects `logic` referencing a subsequent field (forward reference)
   - Rejects unknown operator (valid ops: `equals`, `not_equals`, `filled`, `empty`, `contains`)
 
-- [ ] **Step 1: Write failing unit tests for logic validation**
+- [x] **Step 1: Write failing unit tests for logic validation**
 
 In `backend/tests/Unit/FormSchemaTest.php`:
 ```php
@@ -123,12 +123,12 @@ In `backend/tests/Unit/FormSchemaTest.php`:
     }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd backend && php artisan test tests/Unit/FormSchemaTest.php`
 Expected: FAIL (assertion fails or logic ignored).
 
-- [ ] **Step 3: Implement logic validation in FormSchema**
+- [x] **Step 3: Implement logic validation in FormSchema**
 
 Update `backend/app/Domain/FormSchema.php`:
 ```php
@@ -159,12 +159,12 @@ Update `backend/app/Domain/FormSchema.php`:
         }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd backend && php artisan test tests/Unit/FormSchemaTest.php`
 Expected: PASS.
 
-- [ ] **Step 5: Run full backend test suite and commit**
+- [x] **Step 5: Run full backend test suite and commit**
 
 Run: `cd backend && php artisan test`
 Expected: 77 passed.
