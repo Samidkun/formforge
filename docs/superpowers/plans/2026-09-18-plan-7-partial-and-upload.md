@@ -177,30 +177,30 @@ git commit -m "feat(backend): add uploads table migration and POST /api/uploads 
 - Consumes: Submission answer for field with type `"file"` or `"file_upload"`.
 - Produces: Accepts strings (filename, URL, UUID) or metadata maps (`{"url": "...", "filename": "..."}`), rejects non-scalar/invalid shapes.
 
-- [ ] **Step 1: Write failing unit test for canonical file type validation**
+- [x] **Step 1: Write failing unit test for canonical file type validation**
 
 In `edge/internal/schema/validator_test.go`:
 - Test validation succeeds when field type is `"file"` with valid string answer.
 - Test validation succeeds when field type is `"file"` with metadata map.
 - Test validation fails when field type is `"file"` with invalid number or boolean value.
 
-- [ ] **Step 2: Run Go tests to confirm failure**
+- [x] **Step 2: Run Go tests to confirm failure**
 
 Run: `cd edge && go test ./internal/schema`
 Expected: FAIL.
 
-- [ ] **Step 3: Update validator in `edge/internal/schema/validator.go`**
+- [x] **Step 3: Update validator in `edge/internal/schema/validator.go`**
 
 In `validator.go`:
 - Match both `case "file", "file_upload":`.
 - Accept string or `map[string]interface{}`.
 
-- [ ] **Step 4: Run Go tests to verify pass**
+- [x] **Step 4: Run Go tests to verify pass**
 
 Run: `cd edge && go test -v ./... && go vet ./...`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add edge/internal/schema/
