@@ -468,7 +468,7 @@ git commit -m "feat(backend): add form_versions, submissions and submission_answ
 - Consumes: `App\Models\Form`, `App\Domain\FormSchema`, `App\Policies\FormPolicy`
 - Produces: Endpoint `POST /api/forms/{id}/publish` returning `{ "success": true, "data": { "form": Form, "version": FormVersion }, "meta": {} }`
 
-- [ ] **Step 1: Write the failing feature test for publish endpoint**
+- [x] **Step 1: Write the failing feature test for publish endpoint**
 
 Create `backend/tests/Feature/FormPublishTest.php`:
 ```php
@@ -623,12 +623,12 @@ class FormPublishTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd backend && php artisan test tests/Feature/FormPublishTest.php`
 Expected: FAIL with 404 or method not found.
 
-- [ ] **Step 3: Implement publish action in FormController**
+- [x] **Step 3: Implement publish action in FormController**
 
 Update `backend/app/Http/Controllers/Api/FormController.php` to add `publish` method:
 ```php
@@ -700,12 +700,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd backend && php artisan test tests/Feature/FormPublishTest.php`
 Expected: PASS (5 tests pass).
 
-- [ ] **Step 5: Run full backend test suite and commit**
+- [x] **Step 5: Run full backend test suite and commit**
 
 Run: `cd backend && php artisan test`
 Expected: 65 passed (130+ assertions).
