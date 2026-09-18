@@ -173,3 +173,171 @@ func TestValidateAnswers_InvalidSchema(t *testing.T) {
 		t.Fatalf("expected error for invalid schema JSON, got nil")
 	}
 }
+
+func TestValidateAnswers_ConditionalLogic_ExemptsHiddenRequiredField(t *testing.T) {
+	schemaRaw := `{
+		"fields": [
+			{"key": "f_subscribe", "type": "choice", "label": "Subscribe?", "required": true, "options": ["Yes", "No"]},
+			{"key": "f_email", "type": "email", "label": "Email", "required": true, "logic": {"showIf": {"field": "f_subscribe", "op": "equals", "value": "Yes"}}}
+		]
+	}`
+
+	// User answered "No" to subscribe, so email is hidden and should NOT fail required check
+	answers := []Answer{
+		{FieldKey: "f_subscribe", Value: "No"},
+	}
+
+	errs, err := ValidateAnswers([]byte(schemaRaw), true, answers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(errs) != 0 {
+		t.Errorf("expected 0 errors for hidden required field, got: %v", errs)
+	}
+
+	// User answered "Yes" to subscribe, so email is visible and MUST fail required check if omitted
+	answersYes := []Answer{
+		{FieldKey: "f_subscribe", Value: "Yes"},
+	}
+
+	errsYes, err := ValidateAnswers([]byte(schemaRaw), true, answersYes)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := errsYes["f_email"]; !ok {
+		t.Errorf("expected required error for f_email when condition is met")
+	}
+}
+
+func TestIsFieldVisible(t *testing.T) {
+	// 1. Without logic -> visible
+	fNoLogic := Field{Key: "f_1", Type: "text"}
+	if !IsFieldVisible(fNoLogic, map[string]interface{}{}) {
+		t.Errorf("field without logic should be visible")
+	}
+
+	// 2. empty operator
+	fEmpty := Field{
+		Key:  "f_empty",
+		Type: "text",
+		Logic: &Logic{
+			ShowIf: &LogicRule{Field: "trigger", Op: "empty"},
+		},
+	}
+	if !IsFieldVisible(fEmpty, map[string]interface{}{}) {
+		t.Errorf("missing trigger should satisfy 'empty'")
+	}
+	if !IsFieldVisible(fEmpty, map[string]interface{}{"trigger": ""}) {
+		t.Errorf("empty string trigger should satisfy 'empty'")
+	}
+	if IsFieldVisible(fEmpty, map[string]interface{}{"trigger": "hello"}) {
+		t.Errorf("non-empty trigger should NOT satisfy 'empty'")
+	}
+
+	// 3. filled operator
+	fFilled := Field{
+		Key:  "f_filled",
+		Type: "text",
+		Logic: &Logic{
+			ShowIf: &LogicRule{Field: "trigger", Op: "filled"},
+		},
+	}
+	if IsFieldVisible(fFilled, map[string]interface{}{}) {
+		t.Errorf("missing trigger should NOT satisfy 'filled'")
+	}
+	if IsFieldVisible(fFilled, map[string]interface{}{"trigger": ""}) {
+		t.Errorf("empty trigger should NOT satisfy 'filled'")
+	}
+	if !IsFieldVisible(fFilled, map[string]interface{}{"trigger": "hello"}) {
+		t.Errorf("filled trigger should satisfy 'filled'")
+	}
+
+	// 4. equals operator
+	fEquals := Field{
+		Key:  "f_eq",
+		Type: "text",
+		Logic: &Logic{
+			ShowIf: &LogicRule{Field: "role", Op: "equals", Value: "Student"},
+		},
+	}
+	if IsFieldVisible(fEquals, map[string]interface{}{}) {
+		t.Errorf("missing value should NOT satisfy 'equals'")
+	}
+	if IsFieldVisible(fEquals, map[string]interface{}{"role": "Teacher"}) {
+		t.Errorf("different value should NOT satisfy 'equals'")
+	}
+	if !IsFieldVisible(fEquals, map[string]interface{}{"role": "Student"}) {
+		t.Errorf("matching value should satisfy 'equals'")
+	}
+
+	// 5. not_equals operator
+	fNotEquals := Field{
+		Key:  "f_neq",
+		Type: "text",
+		Logic: &Logic{
+			ShowIf: &LogicRule{Field: "role", Op: "not_equals", Value: "Student"},
+		},
+	}
+	if IsFieldVisible(fNotEquals, map[string]interface{}{}) {
+		t.Errorf("missing value should NOT satisfy 'not_equals'")
+	}
+	if IsFieldVisible(fNotEquals, map[string]interface{}{"role": "Student"}) {
+		t.Errorf("matching value should NOT satisfy 'not_equals'")
+	}
+	if !IsFieldVisible(fNotEquals, map[string]interface{}{"role": "Teacher"}) {
+		t.Errorf("different value should satisfy 'not_equals'")
+	}
+
+	// 6. contains operator (string and slice)
+	fContains := Field{
+		Key:  "f_contains",
+		Type: "text",
+		Logic: &Logic{
+			ShowIf: &LogicRule{Field: "tags", Op: "contains", Value: "tech"},
+		},
+	}
+	if IsFieldVisible(fContains, map[string]interface{}{}) {
+		t.Errorf("missing value should NOT satisfy 'contains'")
+	}
+	if !IsFieldVisible(fContains, map[string]interface{}{"tags": "fintech company"}) {
+		t.Errorf("string containing substring should satisfy 'contains'")
+	}
+	if IsFieldVisible(fContains, map[string]interface{}{"tags": "health care"}) {
+		t.Errorf("string not containing substring should NOT satisfy 'contains'")
+	}
+	if !IsFieldVisible(fContains, map[string]interface{}{"tags": []interface{}{"design", "tech"}}) {
+		t.Errorf("slice containing item should satisfy 'contains'")
+	}
+	if !IsFieldVisible(fContains, map[string]interface{}{"tags": []string{"design", "tech"}}) {
+		t.Errorf("[]string containing item should satisfy 'contains'")
+	}
+	if IsFieldVisible(fContains, map[string]interface{}{"tags": []interface{}{"design", "marketing"}}) {
+		t.Errorf("slice not containing item should NOT satisfy 'contains'")
+	}
+}
+
+func TestValidateAnswers_HiddenField_SkipsTypeValidation(t *testing.T) {
+	schemaRaw := `{
+		"fields": [
+			{"key": "f_subscribe", "type": "choice", "label": "Subscribe?", "required": true, "options": ["Yes", "No"]},
+			{"key": "f_email", "type": "email", "label": "Email", "required": true, "logic": {"showIf": {"field": "f_subscribe", "op": "equals", "value": "Yes"}}}
+		]
+	}`
+
+	// User answered "No" to subscribe, but also supplied an invalid email.
+	// Since the field is hidden, the answer should be ignored and not produce type validation errors.
+	answers := []Answer{
+		{FieldKey: "f_subscribe", Value: "No"},
+		{FieldKey: "f_email", Value: "not-an-email"},
+	}
+
+	errs, err := ValidateAnswers([]byte(schemaRaw), true, answers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(errs) != 0 {
+		t.Errorf("expected 0 errors for hidden field with invalid answer, got: %v", errs)
+	}
+}
+
+

@@ -9,12 +9,23 @@ import (
 	"strings"
 )
 
+type LogicRule struct {
+	Field string      `json:"field"`
+	Op    string      `json:"op"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+type Logic struct {
+	ShowIf *LogicRule `json:"showIf,omitempty"`
+}
+
 type Field struct {
 	Key      string   `json:"key"`
 	Type     string   `json:"type"`
 	Label    string   `json:"label"`
 	Required bool     `json:"required"`
 	Options  []string `json:"options,omitempty"`
+	Logic    *Logic   `json:"logic,omitempty"`
 }
 
 type Schema struct {
@@ -48,6 +59,9 @@ func ValidateAnswers(schemaJSON []byte, isComplete bool, answers []Answer) (map[
 	// 1. Check required fields if submission is complete
 	if isComplete {
 		for _, f := range s.Fields {
+			if !IsFieldVisible(f, answerMap) {
+				continue
+			}
 			if f.Required {
 				val, exists := answerMap[f.Key]
 				if !exists || isEmptyValue(val) {
@@ -62,6 +76,10 @@ func ValidateAnswers(schemaJSON []byte, isComplete bool, answers []Answer) (map[
 		f, ok := fieldMap[a.FieldKey]
 		if !ok {
 			errors[a.FieldKey] = "Unknown field key."
+			continue
+		}
+
+		if !IsFieldVisible(f, answerMap) {
 			continue
 		}
 
@@ -172,6 +190,59 @@ func ValidateAnswers(schemaJSON []byte, isComplete bool, answers []Answer) (map[
 	return errors, nil
 }
 
+func IsFieldVisible(f Field, answerMap map[string]interface{}) bool {
+	if f.Logic == nil || f.Logic.ShowIf == nil {
+		return true
+	}
+
+	rule := f.Logic.ShowIf
+	val, exists := answerMap[rule.Field]
+
+	switch rule.Op {
+	case "empty":
+		return !exists || isEmptyValue(val)
+	case "filled":
+		return exists && !isEmptyValue(val)
+	case "equals":
+		if !exists || isEmptyValue(val) {
+			return false
+		}
+		return fmt.Sprintf("%v", val) == fmt.Sprintf("%v", rule.Value)
+	case "not_equals":
+		if !exists || isEmptyValue(val) {
+			return false
+		}
+		return fmt.Sprintf("%v", val) != fmt.Sprintf("%v", rule.Value)
+	case "contains":
+		if !exists || isEmptyValue(val) {
+			return false
+		}
+		ruleValStr := fmt.Sprintf("%v", rule.Value)
+		switch v := val.(type) {
+		case string:
+			return strings.Contains(v, ruleValStr)
+		case []interface{}:
+			for _, item := range v {
+				if fmt.Sprintf("%v", item) == ruleValStr {
+					return true
+				}
+			}
+			return false
+		case []string:
+			for _, item := range v {
+				if item == ruleValStr {
+					return true
+				}
+			}
+			return false
+		default:
+			return strings.Contains(fmt.Sprintf("%v", v), ruleValStr)
+		}
+	default:
+		return true
+	}
+}
+
 func isEmptyValue(v interface{}) bool {
 	if v == nil {
 		return true
@@ -180,6 +251,8 @@ func isEmptyValue(v interface{}) bool {
 	case string:
 		return strings.TrimSpace(val) == ""
 	case []interface{}:
+		return len(val) == 0
+	case []string:
 		return len(val) == 0
 	case map[string]interface{}:
 		return len(val) == 0
