@@ -2352,7 +2352,7 @@ git commit -m "feat(frontend): integrate builder with laravel forms api and draf
   - `php:audit` (`backend/` composer audit)
   - E2E smoke Playwright: halaman `/forms/test-id/edit` merender palette 9 tombol + canvas kosong.
 
-- [ ] **Step 1: Konfigurasi Playwright**
+- [x] **Step 1: Konfigurasi Playwright**
 
 `frontend/playwright.config.ts`:
 ```ts
@@ -2383,7 +2383,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Tulis Playwright Smoke Test**
+- [x] **Step 2: Tulis Playwright Smoke Test**
 
 `frontend/e2e/builder.smoke.spec.ts`:
 ```ts
@@ -2431,12 +2431,12 @@ test.describe('Form Builder UI Smoke', () => {
 });
 ```
 
-- [ ] **Step 3: Tambahkan script test:e2e di package.json frontend**
+- [x] **Step 3: Tambahkan script test:e2e di package.json frontend**
 
 Pastikan di `frontend/package.json` ada:
 `"test:e2e": "playwright test"`
 
-- [ ] **Step 4: Jalankan gate penuh secara lokal**
+- [x] **Step 4: Jalankan gate penuh secara lokal**
 
 Run:
 ```bash
@@ -2464,7 +2464,7 @@ Expected:
 ================================================================
 ```
 
-- [ ] **Step 5: Jalankan smoke E2E test**
+- [x] **Step 5: Jalankan smoke E2E test**
 
 Run:
 ```bash
@@ -2472,7 +2472,7 @@ cd frontend && npx playwright test
 ```
 Expected: `1 passed`.
 
-- [ ] **Step 6: Mutation check gate node (SOP: gate yang tidak bisa gagal itu dekorasi)**
+- [x] **Step 6: Mutation check gate node (SOP: gate yang tidak bisa gagal itu dekorasi)**
 
 Uji bahwa salah satu gate node bisa merah:
 1. Rusak salah satu test di `frontend/src/builder/schema.test.ts` (`expect(true).toBe(false)`).
@@ -2480,7 +2480,7 @@ Uji bahwa salah satu gate node bisa merah:
 3. Pastikan `EXIT=1` dan summary menampilkan `FAIL node:test`.
 4. Restore file (`git checkout -- frontend/src/builder/schema.test.ts`), pastikan hijau kembali.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/playwright.config.ts frontend/e2e/ \
@@ -2492,16 +2492,16 @@ git commit -m "ci: add playwright smoke test and verify all local-ci gates for m
 
 ## Definition of Done — Milestone 2
 
-- [ ] Next.js app berjalan di `frontend/` dengan design token Rukun (spec §6).
-- [ ] Tabel `forms` ter-migrasi di Postgres + model `Form` relasi ke `Workspace`.
-- [ ] CRUD API `/api/forms` di Laravel berfungsi dengan validasi `draft_schema` via `FormSchema` (Plan 1) dan otorisasi `FormPolicy`.
-- [ ] Reducer builder (`schema.ts`) lulus **24 unit test** TDD murni (immutable, batas 50 field, format `f_<n>`).
-- [ ] Canvas drag-drop (`@dnd-kit/sortable`) memungkinkan penambahan dari palette, reorder, hapus, dan seleksi field.
-- [ ] Panel konfigurasi mengedit label, toggle required, dan opsi (untuk choice/multi_choice).
-- [ ] Draft tersimpan ke backend via `PATCH /api/forms/{id}` dengan feedback status visual.
-- [ ] Playwright E2E smoke test lulus.
-- [ ] `scripts/local-ci.sh --tier t0 --fast` **ALL GREEN** (lint, typecheck, test, audit, license, build untuk Node & PHP).
-- [ ] Gate terbukti bisa MERAH saat test dirusak.
+- [x] Next.js app berjalan di `frontend/` dengan design token Rukun (spec §6).
+- [x] Tabel `forms` ter-migrasi di Postgres + model `Form` relasi ke `Workspace`.
+- [x] CRUD API `/api/forms` di Laravel berfungsi dengan validasi `draft_schema` via `FormSchema` (Plan 1) dan otorisasi `FormPolicy`.
+- [x] Reducer builder (`schema.ts`) lulus **24 unit test** TDD murni (immutable, batas 50 field, format `f_<n>`).
+- [x] Canvas drag-drop (`@dnd-kit/sortable`) memungkinkan penambahan dari palette, reorder, hapus, dan seleksi field.
+- [x] Panel konfigurasi mengedit label, toggle required, dan opsi (untuk choice/multi_choice).
+- [x] Draft tersimpan ke backend via `PATCH /api/forms/{id}` dengan feedback status visual.
+- [x] Playwright E2E smoke test lulus.
+- [x] `scripts/local-ci.sh --tier t0 --fast` **ALL GREEN** (lint, typecheck, test, audit, license, build untuk Node & PHP).
+- [x] Gate terbukti bisa MERAH saat test dirusak.
 
 ## Batas Plan 2 (dicatat eksplisit, bukan gap diam-diam)
 
