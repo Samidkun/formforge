@@ -1074,7 +1074,7 @@ git commit -m "feat(edge): add public submission answer validation against schem
   - `POST /f/:slug/submit` -> returns 200 `{success: true, data: {submission_id, status}}` or 422
   - `POST /f/:slug/event` -> returns 204
 
-- [ ] **Step 1: Write handler test with mock or integration DB**
+- [x] **Step 1: Write handler test with mock or integration DB**
 
 Create `edge/internal/handler/handler_test.go`:
 ```go
@@ -1219,12 +1219,12 @@ func TestSubmitForm_Success(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd edge && go test ./internal/handler`
 Expected: FAIL because handler types are not defined.
 
-- [ ] **Step 3: Implement database queries and HTTP handler**
+- [x] **Step 3: Implement database queries and HTTP handler**
 
 Create `edge/internal/db/db.go`:
 ```go
@@ -1671,12 +1671,12 @@ func main() {
 Fetch dependency:
 `cd edge && go get github.com/lib/pq`
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd edge && go test -v ./internal/handler`
 Expected: PASS (all 4 handler tests pass).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add edge/
