@@ -7,6 +7,20 @@ class FormSchema
     /** @param array<int, array<string, mixed>> $fields */
     private function __construct(private readonly array $fields) {}
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, string>
+     */
+    public static function validate(array $data): array
+    {
+        try {
+            self::fromArray($data);
+            return [];
+        } catch (\InvalidArgumentException $e) {
+            return ['schema' => $e->getMessage()];
+        }
+    }
+
     public static function fromArray(array $data): self
     {
         if (!array_key_exists('fields', $data) || !is_array($data['fields'])) {

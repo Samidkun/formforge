@@ -9,6 +9,7 @@ use App\Http\Requests\StoreFormRequest;
 use App\Http\Requests\UpdateFormRequest;
 use App\Models\Form;
 use App\Models\Workspace;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -96,5 +97,60 @@ class FormController extends Controller
         Gate::authorize('delete', $form);
         $form->delete();
         return $this->envelope(['deleted' => true]);
+    }
+
+    public function publish(string $id): JsonResponse
+    {
+        $form = Form::findOrFail($id);
+        Gate::authorize('update', $form);
+
+        $schema = $form->draft_schema ?? [];
+        $errors = FormSchema::validate($schema);
+
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INVALID_SCHEMA',
+                    'message' => 'Cannot publish form with invalid schema.',
+                    'details' => $errors,
+                ],
+                'meta' => [],
+            ], 422);
+        }
+
+        if (empty($schema['fields'] ?? [])) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INVALID_SCHEMA',
+                    'message' => 'Cannot publish form with zero fields.',
+                    'details' => ['fields' => 'Form must contain at least one field.'],
+                ],
+                'meta' => [],
+            ], 422);
+        }
+
+        $nextVersionNo = ($form->formVersions()->max('version_no') ?? 0) + 1;
+
+        $version = $form->formVersions()->create([
+            'version_no' => $nextVersionNo,
+            'schema' => $schema,
+            'published_at' => now(),
+        ]);
+
+        $form->update([
+            'status' => 'published',
+            'current_version_id' => $version->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'form' => $form->fresh(['currentVersion']),
+                'version' => $version,
+            ],
+            'meta' => [],
+        ]);
     }
 }

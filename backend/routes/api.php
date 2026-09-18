@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/forms/{form}', [FormController::class, 'show']);
     Route::patch('/forms/{form}', [FormController::class, 'update']);
     Route::delete('/forms/{form}', [FormController::class, 'destroy']);
+    Route::post('/forms/{id}/publish', [FormController::class, 'publish']);
 });
 
 // Test-only route (ruling T6-2): the 403 envelope handler in bootstrap/app.php

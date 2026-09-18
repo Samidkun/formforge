@@ -167,4 +167,15 @@ class FormSchemaTest extends TestCase
             ['key' => 'f_1', 'type' => 'text', 'label' => ['x'], 'required' => false],
         ]]);
     }
+
+    public function test_validate_returns_empty_array_on_valid_schema(): void
+    {
+        $this->assertSame([], FormSchema::validate($this->validSchema()));
+    }
+
+    public function test_validate_returns_error_on_invalid_schema(): void
+    {
+        $errors = FormSchema::validate(['fields' => 'invalid']);
+        $this->assertArrayHasKey('schema', $errors);
+    }
 }
