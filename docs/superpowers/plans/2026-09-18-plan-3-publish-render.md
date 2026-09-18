@@ -728,7 +728,7 @@ git commit -m "feat(backend): add publish form endpoint with immutable versionin
 - Consumes: JSON Schema definitions (fields array with types and rules)
 - Produces: `ValidateAnswers(schemaJSON []byte, isComplete bool, answers []Answer) (map[string]string, error)`
 
-- [ ] **Step 1: Scaffold Go module and write failing unit test**
+- [x] **Step 1: Scaffold Go module and write failing unit test**
 
 Initialize `edge/go.mod`:
 ```bash
@@ -863,12 +863,12 @@ func TestValidateAnswers_ValidValues(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd edge && go test ./internal/schema`
 Expected: FAIL because `validator.go` is not implemented.
 
-- [ ] **Step 3: Implement validator in Go**
+- [x] **Step 3: Implement validator in Go**
 
 Create `edge/internal/schema/validator.go`:
 ```go
@@ -1045,12 +1045,12 @@ func isEmptyValue(v interface{}) bool {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd edge && go test -v ./internal/schema`
 Expected: PASS (all 4 test cases pass).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add edge/go.mod edge/internal/schema/
