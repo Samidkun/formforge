@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FormController;
+use App\Http\Controllers\Api\ResponseController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/forms/{form}', [FormController::class, 'update']);
     Route::delete('/forms/{form}', [FormController::class, 'destroy']);
     Route::post('/forms/{id}/publish', [FormController::class, 'publish']);
+    Route::get('/forms/{id}/responses', [ResponseController::class, 'index']);
 });
 
 // Test-only route (ruling T6-2): the 403 envelope handler in bootstrap/app.php
