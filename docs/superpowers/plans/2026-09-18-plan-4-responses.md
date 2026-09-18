@@ -930,7 +930,7 @@ git commit -m "feat(frontend): implement responses page route and builder tab na
 - Consumes: Next.js frontend, Laravel responses endpoint
 - Produces: Playwright test verifying responses table render, filter by status, and CSV export action.
 
-- [ ] **Step 1: Write Playwright E2E test for responses view**
+- [x] **Step 1: Write Playwright E2E test for responses view**
 
 Create `frontend/e2e/responses.spec.ts`:
 ```ts
@@ -1006,7 +1006,7 @@ test.describe('Form Responses Dashboard E2E', () => {
 })
 ```
 
-- [ ] **Step 2: Run Playwright tests and Local-CI**
+- [x] **Step 2: Run Playwright tests and Local-CI**
 
 Run: `cd frontend && npx playwright test e2e/responses.spec.ts`
 Expected: 1 passed.
@@ -1014,7 +1014,7 @@ Expected: 1 passed.
 Run: `bash scripts/local-ci.sh --tier t0 --fast`
 Expected: ALL GREEN (11 gates pass).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add frontend/e2e/responses.spec.ts
