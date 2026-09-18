@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FieldPalette } from './FieldPalette';
 import { BuilderCanvas } from './BuilderCanvas';
 import { FieldConfigPanel } from './FieldConfigPanel';
+import { canAddField, nextFieldKey } from '../schema';
 import type { Schema, SchemaAction } from '../types';
 import type { SaveStatus } from '../hooks/useFormBuilder';
 
@@ -50,7 +51,15 @@ export function BuilderView({ schema, dispatch, title, saveStatus = 'idle', onSa
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <FieldPalette onAdd={(type) => dispatch({ type: 'add_field', fieldType: type })} />
+        <FieldPalette
+          onAdd={(type) => {
+            if (canAddField(schema)) {
+              const newKey = nextFieldKey(schema);
+              dispatch({ type: 'add_field', fieldType: type });
+              setSelectedKey(newKey);
+            }
+          }}
+        />
         <BuilderCanvas
           schema={schema}
           selectedKey={selectedKey}

@@ -2,6 +2,10 @@ node_modules/
 .next/
 out/
 coverage/
+test-results/
+playwright-report/
+AGENTS.md
+CLAUDE.md
 .env
 .env.local
 next-env.d.ts
