@@ -1,8 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FormRenderer } from './FormRenderer';
+import { api } from '@/lib/api';
 
 describe('FormRenderer', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(api, 'uploadFile').mockImplementation(async (file: File) => ({
+      id: 'mock-upload-id',
+      filename: file.name,
+      mime: file.type,
+      size: file.size,
+      url: file.name,
+    }));
+  });
   const basicSchema = {
     fields: [
       { key: 'f_name', type: 'text', label: 'Full Name', required: true },
@@ -134,6 +145,7 @@ describe('FormRenderer', () => {
     // File
     const file = new File(['dummy content'], 'resume.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText(/Resume/i), { target: { files: [file] } });
+    await screen.findByText('resume.pdf');
 
     const submitBtn = screen.getByRole('button', { name: /submit/i });
     fireEvent.click(submitBtn);
@@ -319,6 +331,158 @@ describe('FormRenderer', () => {
         expect(onSubmit).toHaveBeenCalled();
         expect(onEvent).toHaveBeenCalledWith('complete');
       });
+    });
+  });
+
+  describe('file upload integration', () => {
+    const fileSchema = {
+      fields: [
+        { key: 'f_attachment', type: 'file_upload', label: 'Lampiran Berkas', required: false },
+      ],
+    };
+
+    it('selecting a file triggers upload and sets field value with uploaded URL', async () => {
+      const mockUpload = vi.fn().mockResolvedValue({
+        id: 'up-1',
+        filename: 'document.pdf',
+        url: '/storage/uploads/document.pdf',
+      });
+      const onSubmit = vi.fn().mockResolvedValue({ success: true });
+
+      render(
+        <FormRenderer
+          schema={fileSchema}
+          slug="upload-test"
+          onUploadFile={mockUpload}
+          onSubmit={onSubmit}
+        />
+      );
+
+      const file = new File(['content'], 'document.pdf', { type: 'application/pdf' });
+      const fileInput = screen.getByLabelText(/Lampiran Berkas/i);
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      expect(mockUpload).toHaveBeenCalledWith(file);
+
+      // Should show uploaded filename
+      expect(await screen.findByText('document.pdf')).toBeDefined();
+
+      // Submit and verify payload contains uploaded URL
+      fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith([
+          { field_key: 'f_attachment', value: '/storage/uploads/document.pdf' },
+        ]);
+      });
+    });
+
+    it('shows uploading spinner / indicator while file is uploading', async () => {
+      let resolveUpload!: (val: any) => void;
+      const uploadPromise = new Promise((resolve) => {
+        resolveUpload = resolve;
+      });
+      const mockUpload = vi.fn().mockReturnValue(uploadPromise);
+
+      render(
+        <FormRenderer
+          schema={fileSchema}
+          slug="upload-test"
+          onUploadFile={mockUpload}
+        />
+      );
+
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+      fireEvent.change(screen.getByLabelText(/Lampiran Berkas/i), { target: { files: [file] } });
+
+      // Should show uploading text
+      expect(screen.getByText(/Mengunggah\.\.\./i)).toBeDefined();
+
+      // Resolve upload
+      resolveUpload({
+        id: 'up-2',
+        filename: 'photo.jpg',
+        url: '/storage/uploads/photo.jpg',
+      });
+
+      expect(await screen.findByText('photo.jpg')).toBeDefined();
+      expect(screen.queryByText(/Mengunggah\.\.\./i)).toBeNull();
+    });
+
+    it('allows removing uploaded file with Hapus button and clears field value', async () => {
+      const mockUpload = vi.fn().mockResolvedValue({
+        id: 'up-1',
+        filename: 'document.pdf',
+        url: '/storage/uploads/document.pdf',
+      });
+      const onSubmit = vi.fn().mockResolvedValue({ success: true });
+
+      render(
+        <FormRenderer
+          schema={fileSchema}
+          slug="upload-test"
+          onUploadFile={mockUpload}
+          onSubmit={onSubmit}
+        />
+      );
+
+      const file = new File(['content'], 'document.pdf', { type: 'application/pdf' });
+      fireEvent.change(screen.getByLabelText(/Lampiran Berkas/i), { target: { files: [file] } });
+
+      expect(await screen.findByText('document.pdf')).toBeDefined();
+
+      // Click "Hapus" button
+      const removeBtn = screen.getByRole('button', { name: /hapus/i });
+      fireEvent.click(removeBtn);
+
+      // File name should no longer be visible and dropzone prompt returns
+      expect(screen.queryByText('document.pdf')).toBeNull();
+      expect(screen.getByText(/Click or drag file to upload/i)).toBeDefined();
+
+      // Submit and verify field is cleared (not sent in answers or sent empty)
+      fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith([]);
+      });
+    });
+
+    it('displays error message when file upload fails', async () => {
+      const mockUpload = vi.fn().mockRejectedValue(new Error('Ukuran file melebihi 10MB.'));
+
+      render(
+        <FormRenderer
+          schema={fileSchema}
+          slug="upload-test"
+          onUploadFile={mockUpload}
+        />
+      );
+
+      const file = new File(['large content'], 'huge.zip', { type: 'application/zip' });
+      fireEvent.change(screen.getByLabelText(/Lampiran Berkas/i), { target: { files: [file] } });
+
+      expect(await screen.findByText('Ukuran file melebihi 10MB.')).toBeDefined();
+    });
+
+    it('falls back to api.uploadFile when onUploadFile prop is not provided', async () => {
+      vi.spyOn(api, 'uploadFile').mockResolvedValueOnce({
+        id: 'up-fallback',
+        filename: 'fallback.pdf',
+        mime: 'application/pdf',
+        size: 1234,
+        url: '/storage/uploads/fallback.pdf',
+      });
+
+      render(
+        <FormRenderer
+          schema={fileSchema}
+          slug="upload-test"
+        />
+      );
+
+      const file = new File(['content'], 'fallback.pdf', { type: 'application/pdf' });
+      fireEvent.change(screen.getByLabelText(/Lampiran Berkas/i), { target: { files: [file] } });
+
+      expect(api.uploadFile).toHaveBeenCalledWith(file);
+      expect(await screen.findByText('fallback.pdf')).toBeDefined();
     });
   });
 });

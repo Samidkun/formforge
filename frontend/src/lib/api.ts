@@ -176,6 +176,38 @@ export async function getAnalytics(
   return res.json();
 }
 
+export interface UploadResult {
+  id: string;
+  filename: string;
+  mime: string;
+  size: number;
+  url: string;
+}
+
+export async function uploadFile(
+  file: File,
+  token?: string
+): Promise<UploadResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/api/uploads`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      ...authHeaders(token),
+    },
+    body: formData,
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.success) {
+    throw new Error(json?.error?.message || `Gagal mengunggah berkas (status: ${res.status})`);
+  }
+
+  return json.data as UploadResult;
+}
+
 export const api = {
   fetchForm,
   getForm: fetchForm,
@@ -184,6 +216,7 @@ export const api = {
   getResponses,
   exportResponsesUrl,
   getAnalytics,
+  uploadFile,
 };
 
 export default api;

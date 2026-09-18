@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchForm, saveDraft, publishForm, getAnalytics, api } from './api';
+import { fetchForm, saveDraft, publishForm, getAnalytics, uploadFile, api } from './api';
 
 describe('API Client — fetchForm & saveDraft', () => {
   beforeEach(() => {
@@ -340,5 +340,84 @@ describe('API Client — fetchForm & saveDraft', () => {
     );
 
     await expect(getAnalytics('form-1')).rejects.toThrow(/Forbidden access to form analytics/);
+  });
+
+  describe('uploadFile', () => {
+    it('sends FormData to /api/uploads and returns data', async () => {
+      const mockFile = new File(['content'], 'document.pdf', { type: 'application/pdf' });
+      const mockData = {
+        id: 'upload-123',
+        filename: 'document.pdf',
+        mime: 'application/pdf',
+        size: 7,
+        url: '/storage/uploads/document.pdf',
+      };
+
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({ success: true, data: mockData }),
+      } as Response);
+
+      const result = await uploadFile(mockFile, 'test-token');
+
+      expect(result).toEqual(mockData);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/uploads'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Accept: 'application/json',
+            Authorization: 'Bearer test-token',
+          }),
+          body: expect.any(FormData),
+        })
+      );
+    });
+
+    it('throws error when server responds with failure', async () => {
+      const mockFile = new File(['hello'], 'large.png', { type: 'image/png' });
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        json: async () => ({ success: false, error: { message: 'File size exceeds 10MB limit.' } }),
+      } as Response);
+
+      await expect(uploadFile(mockFile)).rejects.toThrow(/File size exceeds 10MB limit\./);
+    });
+
+    it('throws default error when server response is not ok and json is invalid', async () => {
+      const mockFile = new File(['hello'], 'bad.png', { type: 'image/png' });
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => {
+          throw new Error('invalid json');
+        },
+      } as unknown as Response);
+
+      await expect(uploadFile(mockFile)).rejects.toThrow(/status: 500/);
+    });
+
+    it('is exported on api default object', async () => {
+      const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          success: true,
+          data: {
+            id: '1',
+            filename: 'test.txt',
+            mime: 'text/plain',
+            size: 4,
+            url: '/storage/uploads/test.txt',
+          },
+        }),
+      } as Response);
+
+      const res = await api.uploadFile(mockFile);
+      expect(res.filename).toBe('test.txt');
+    });
   });
 });

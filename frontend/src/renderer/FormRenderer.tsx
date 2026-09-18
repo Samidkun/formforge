@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { isFieldVisible } from '@/builder/logic';
 import type { FieldLogic, FormField } from '@/builder/types';
+import { api } from '@/lib/api';
 
 export interface FieldDefinition {
   key: string;
@@ -32,6 +33,7 @@ export interface FormRendererProps {
   submitting?: boolean;
   submitError?: string | null;
   onEvent?: (type: string, fieldKey?: string) => void;
+  onUploadFile?: (file: File) => Promise<{ id?: string; filename: string; url: string }>;
 }
 
 export function FormRenderer({
@@ -43,9 +45,13 @@ export function FormRenderer({
   submitting: propsSubmitting,
   submitError: propsSubmitError,
   onEvent,
+  onUploadFile,
 }: FormRendererProps) {
   const [values, setValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+  const [fileNames, setFileNames] = useState<Record<string, string>>({});
   const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
   const [submitErrorInternal, setSubmitErrorInternal] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -75,6 +81,43 @@ export function FormRenderer({
         return next;
       });
     }
+  };
+
+  const handleFileUpload = async (fieldKey: string, file: File) => {
+    triggerStart();
+    setUploadingFields((prev) => ({ ...prev, [fieldKey]: true }));
+    setUploadErrors((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+
+    try {
+      const res = onUploadFile ? await onUploadFile(file) : await api.uploadFile(file);
+      setFileNames((prev) => ({ ...prev, [fieldKey]: res.filename || file.name }));
+      handleFieldChange(fieldKey, res.url || res.filename || file.name);
+    } catch (err: any) {
+      setUploadErrors((prev) => ({
+        ...prev,
+        [fieldKey]: err?.message || 'Gagal mengunggah berkas.',
+      }));
+    } finally {
+      setUploadingFields((prev) => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  const handleFileRemove = (fieldKey: string) => {
+    handleFieldChange(fieldKey, '');
+    setFileNames((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setUploadErrors((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
   };
 
   const validate = (): boolean => {
@@ -352,31 +395,86 @@ export function FormRenderer({
                 </div>
               ) : normType === 'file_upload' || normType === 'file' ? (
                 <div className="flex flex-col gap-2">
-                  <label
-                    htmlFor={fieldId}
-                    className={`flex flex-col items-center justify-center rounded border-2 border-dashed p-6 cursor-pointer transition ${
-                      hasError
-                        ? 'border-[var(--color-accent-danger)] bg-[var(--color-accent-danger)]/5'
-                        : 'border-[var(--color-border-hairline)] bg-[var(--color-bg-primary)] hover:border-[var(--color-accent-primary)]'
-                    }`}
-                  >
-                    <svg
-                      className="mb-2 h-7 w-7 text-[var(--color-text-muted)]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  {uploadingFields[field.key] ? (
+                    <div className="flex items-center justify-center gap-2 rounded border border-dashed border-[var(--color-accent-primary)]/50 bg-[var(--color-accent-primary)]/5 p-6">
+                      <svg
+                        className="h-5 w-5 animate-spin text-[var(--color-accent-primary)]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-[var(--color-text-secondary)]">
+                        Mengunggah...
+                      </span>
+                    </div>
+                  ) : values[field.key] ? (
+                    <div className="flex items-center justify-between rounded border border-[var(--color-border-hairline)] bg-[var(--color-surface-elevated)] p-3">
+                      <div className="flex items-center gap-2 overflow-hidden text-sm text-[var(--color-text-primary)]">
+                        <svg
+                          className="h-5 w-5 shrink-0 text-[var(--color-text-muted)]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span className="truncate font-mono text-xs">
+                          {fileNames[field.key] || (typeof values[field.key] === 'object' && values[field.key] !== null ? (values[field.key].filename || values[field.key].url) : String(values[field.key]))}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove(field.key)}
+                        className="ml-2 rounded px-2 py-1 text-xs font-medium text-[var(--color-accent-danger)] hover:bg-[var(--color-accent-danger)]/10 transition"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor={fieldId}
+                      className={`flex flex-col items-center justify-center rounded border-2 border-dashed p-6 cursor-pointer transition ${
+                        hasError || uploadErrors[field.key]
+                          ? 'border-[var(--color-accent-danger)] bg-[var(--color-accent-danger)]/5'
+                          : 'border-[var(--color-border-hairline)] bg-[var(--color-bg-primary)] hover:border-[var(--color-accent-primary)]'
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <span className="text-xs font-mono text-[var(--color-text-secondary)]">
-                      {values[field.key] ? String(values[field.key]) : 'Click or drag file to upload'}
-                    </span>
-                  </label>
+                      <svg
+                        className="mb-2 h-7 w-7 text-[var(--color-text-muted)]"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.5"
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
+                      </svg>
+                      <span className="text-xs font-mono text-[var(--color-text-secondary)]">
+                        Click or drag file to upload
+                      </span>
+                    </label>
+                  )}
                   <input
                     id={fieldId}
                     type="file"
@@ -385,7 +483,10 @@ export function FormRenderer({
                     onBlur={() => handleBlur(field.key)}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      handleFieldChange(field.key, file ? file.name : '');
+                      if (file) {
+                        handleFileUpload(field.key, file);
+                      }
+                      e.target.value = '';
                     }}
                   />
                 </div>
@@ -451,18 +552,22 @@ export function FormRenderer({
               )}
 
               {/* Field Error */}
-              {hasError && (
+              {uploadErrors[field.key] ? (
+                <p className="mt-1.5 text-xs text-[var(--color-accent-danger)]" role="alert">
+                  {uploadErrors[field.key]}
+                </p>
+              ) : hasError ? (
                 <p className="mt-1.5 text-xs text-[var(--color-accent-danger)]" role="alert">
                   {errors[field.key]}
                 </p>
-              )}
+              ) : null}
             </div>
           );
         })}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || Object.values(uploadingFields).some(Boolean)}
           className="mt-2 w-full rounded bg-[var(--color-accent-primary)] px-4 py-3 font-medium text-[var(--color-bg-primary)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? 'Submitting...' : 'Submit'}
