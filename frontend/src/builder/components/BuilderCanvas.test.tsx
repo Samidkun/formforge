@@ -56,7 +56,28 @@ describe('BuilderCanvas', () => {
     );
 
     await userEvent.click(screen.getByText('Nama'));
+    expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('f_1');
+  });
+
+  it('memanggil onSelect(null) saat background kanvas diklik', async () => {
+    const onSelect = vi.fn();
+    const schema: Schema = {
+      fields: [{ key: 'f_1', type: 'text', label: 'Nama' }],
+    };
+    render(
+      <BuilderCanvas
+        schema={schema}
+        selectedKey="f_1"
+        onSelect={onSelect}
+        onRemove={() => {}}
+        onMove={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByLabelText('Kanvas Form'));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(null);
   });
 
   it('memanggil onRemove saat tombol hapus diklik', async () => {

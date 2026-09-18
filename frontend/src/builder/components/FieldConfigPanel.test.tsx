@@ -53,4 +53,36 @@ describe('FieldConfigPanel', () => {
 
     expect(onSetOptions).toHaveBeenCalledWith('f_2', ['Opsi 1', 'Opsi 2', 'Opsi 3']);
   });
+
+  it('mempertahankan newline saat mengetik di textarea opsi meskipun options ter-filter', async () => {
+    let currentField: Field = { key: 'f_2', type: 'choice', label: 'Paket', options: [] };
+    const onSetOptions = vi.fn((key: string, options: string[]) => {
+      // Simulasikan schemaReducer yang menghapus string kosong pada array opsi
+      currentField = {
+        ...currentField,
+        options: options.map((o) => o.trim()).filter((o) => o !== ''),
+      };
+      rerender(
+        <FieldConfigPanel
+          selectedField={currentField}
+          onUpdate={() => {}}
+          onSetOptions={onSetOptions}
+        />
+      );
+    });
+
+    const { rerender } = render(
+      <FieldConfigPanel
+        selectedField={currentField}
+        onUpdate={() => {}}
+        onSetOptions={onSetOptions}
+      />
+    );
+
+    const textarea = screen.getByLabelText(/Opsi Pilihan/i);
+    await userEvent.type(textarea, 'A\n');
+
+    expect(textarea).toHaveValue('A\n');
+    expect(onSetOptions).toHaveBeenCalledWith('f_2', ['A', '']);
+  });
 });

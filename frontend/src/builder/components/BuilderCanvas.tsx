@@ -39,8 +39,23 @@ export function BuilderCanvas({ schema, selectedKey, onSelect, onRemove, onMove 
   }
 
   return (
-    <section aria-label="Kanvas Form" className="flex-1 overflow-y-auto p-6" onClick={() => onSelect(null)}>
-      <div className="mx-auto max-w-xl flex flex-col gap-2.5">
+    <section
+      aria-label="Kanvas Form"
+      className="flex-1 overflow-y-auto p-6"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onSelect(null);
+        }
+      }}
+    >
+      <div
+        className="mx-auto max-w-xl flex flex-col gap-2.5"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onSelect(null);
+          }
+        }}
+      >
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={schema.fields.map((f) => f.key)} strategy={verticalListSortingStrategy}>
             {schema.fields.map((field) => (

@@ -25,7 +25,10 @@ export function SortableFieldItem({ field, isSelected, onSelect, onRemove }: Sor
     <div
       ref={setNodeRef}
       style={style}
-      onClick={() => onSelect(field.key)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(field.key);
+      }}
       className={`group flex items-center justify-between rounded border p-3 cursor-pointer transition-colors ${
         isSelected
           ? 'border-[var(--color-accent-primary)] bg-[var(--color-surface-elevated)]'

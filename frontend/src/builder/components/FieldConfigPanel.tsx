@@ -17,20 +17,19 @@ function FieldConfigForm({
   onUpdate: (key: string, patch: Partial<Pick<Field, 'label' | 'required'>>) => void;
   onSetOptions: (key: string, options: string[]) => void;
 }) {
+  const [prevKey, setPrevKey] = useState(field.key);
   const [prevLabel, setPrevLabel] = useState(field.label);
   const [label, setLabel] = useState(field.label);
-
-  if (field.label !== prevLabel) {
-    setPrevLabel(field.label);
-    setLabel(field.label);
-  }
-
-  const [prevOptions, setPrevOptions] = useState(field.options);
   const [optionsText, setOptionsText] = useState((field.options ?? []).join('\n'));
 
-  if (field.options !== prevOptions) {
-    setPrevOptions(field.options);
+  if (field.key !== prevKey) {
+    setPrevKey(field.key);
+    setPrevLabel(field.label);
+    setLabel(field.label);
     setOptionsText((field.options ?? []).join('\n'));
+  } else if (field.label !== prevLabel) {
+    setPrevLabel(field.label);
+    setLabel(field.label);
   }
 
   const isChoiceType = field.type === 'choice' || field.type === 'multi_choice';
