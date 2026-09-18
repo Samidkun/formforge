@@ -1438,7 +1438,7 @@ git commit -m "feat(frontend): add builder schema reducer as pure tdd logic"
   - `FieldConfigPanel`: Panel inspeksi & edit atribut field terpilih (label, required toggle, opsi untuk choice/multi_choice).
   - `BuilderView`: Komponen koordinator menyatukan Palette + Canvas + ConfigPanel dengan state `useReducer(schemaReducer, initialSchema)`.
 
-- [ ] **Step 1: Tulis test FieldConfigPanel yang gagal**
+- [x] **Step 1: Tulis test FieldConfigPanel yang gagal**
 
 ```tsx
 // frontend/src/builder/components/FieldConfigPanel.test.tsx
@@ -1500,12 +1500,12 @@ describe('FieldConfigPanel', () => {
 });
 ```
 
-- [ ] **Step 2: Jalankan test FieldConfigPanel, pastikan GAGAL**
+- [x] **Step 2: Jalankan test FieldConfigPanel, pastikan GAGAL**
 
 Run: `cd frontend && npx vitest run src/builder/components/FieldConfigPanel.test.tsx`
 Expected: FAIL — `Cannot find module './FieldConfigPanel'`.
 
-- [ ] **Step 3: Implementasi FieldConfigPanel**
+- [x] **Step 3: Implementasi FieldConfigPanel**
 
 ```tsx
 // frontend/src/builder/components/FieldConfigPanel.tsx
@@ -1594,7 +1594,7 @@ export function FieldConfigPanel({ selectedField, onUpdate, onSetOptions }: Fiel
 }
 ```
 
-- [ ] **Step 4: Tulis test BuilderCanvas yang gagal**
+- [x] **Step 4: Tulis test BuilderCanvas yang gagal**
 
 ```tsx
 // frontend/src/builder/components/BuilderCanvas.test.tsx
@@ -1680,7 +1680,7 @@ describe('BuilderCanvas', () => {
 });
 ```
 
-- [ ] **Step 5: Implementasi SortableFieldItem & BuilderCanvas**
+- [x] **Step 5: Implementasi SortableFieldItem & BuilderCanvas**
 
 `frontend/src/builder/components/SortableFieldItem.tsx`:
 ```tsx
@@ -1820,7 +1820,7 @@ export function BuilderCanvas({ schema, selectedKey, onSelect, onRemove, onMove 
 }
 ```
 
-- [ ] **Step 6: Buat BuilderView koordinator & integrasikan ke edit page**
+- [x] **Step 6: Buat BuilderView koordinator & integrasikan ke edit page**
 
 `frontend/src/builder/components/BuilderView.tsx`:
 ```tsx
@@ -1894,12 +1894,12 @@ export default async function EditFormPage({ params }: { params: Promise<{ id: s
 }
 ```
 
-- [ ] **Step 7: Jalankan test Task 5, pastikan PASS**
+- [x] **Step 7: Jalankan test Task 5, pastikan PASS**
 
 Run: `cd frontend && npx vitest run src/builder/components/`
 Expected: PASS (FieldPalette, FieldConfigPanel, BuilderCanvas — semua hijau).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/builder/components/ \
