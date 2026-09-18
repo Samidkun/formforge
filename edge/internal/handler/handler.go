@@ -72,7 +72,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := strings.TrimPrefix(r.URL.Path, "/f/")
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, "/f/"), "/")
 	parts := strings.Split(path, "/")
 
 	if len(parts) == 0 || parts[0] == "" {

@@ -30,7 +30,7 @@ func main() {
 	}
 	dbPass := os.Getenv("DB_PASSWORD")
 	if dbPass == "" {
-		dbPass = "secret"
+		dbPass = "devpass"
 	}
 	dbName := os.Getenv("DB_DATABASE")
 	if dbName == "" {
