@@ -291,7 +291,7 @@ git commit -m "feat(edge): add conditional logic visibility evaluation in submis
   - Function: `isFieldVisible(field: FormField, answers: Record<string, any>): boolean`
   - Function: `getAvailableTriggerFields(fields: FormField[], currentFieldKey: string): FormField[]`
 
-- [ ] **Step 1: Write unit tests for logic evaluator**
+- [x] **Step 1: Write unit tests for logic evaluator**
 
 Create `frontend/src/builder/logic.test.ts`:
 ```ts
@@ -333,12 +333,12 @@ describe('conditional logic evaluator', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/builder/logic.test.ts`
 Expected: FAIL (`logic.ts` not found).
 
-- [ ] **Step 3: Implement logic.ts and update types.ts**
+- [x] **Step 3: Implement logic.ts and update types.ts**
 
 Update `frontend/src/builder/types.ts`:
 Add `LogicOperator = 'equals' | 'not_equals' | 'filled' | 'empty' | 'contains'`, `LogicRule`, `FieldLogic`.
@@ -347,12 +347,12 @@ Add `logic?: FieldLogic` to `FormField`.
 Create `frontend/src/builder/logic.ts`:
 Implement `isFieldVisible` and `getAvailableTriggerFields`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npm test src/builder/logic.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/builder/types.ts frontend/src/builder/logic.ts frontend/src/builder/logic.test.ts
