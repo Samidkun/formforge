@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FieldConfigPanel } from './FieldConfigPanel';
-import type { Field } from '../types';
+import type { Field, FormField } from '../types';
 
 describe('FieldConfigPanel', () => {
   it('menampilkan placeholder saat tidak ada field yang dipilih', () => {
@@ -84,5 +84,204 @@ describe('FieldConfigPanel', () => {
 
     expect(textarea).toHaveValue('A\n');
     expect(onSetOptions).toHaveBeenCalledWith('f_2', ['A', '']);
+  });
+
+  it('renders conditional logic configuration for fields with prior fields', () => {
+    const priorField: FormField = { key: 'f_1', type: 'choice', label: 'Status', required: true, options: ['A', 'B'] };
+    const currentField: FormField = { key: 'f_2', type: 'text', label: 'Detail', required: false };
+
+    render(
+      <FieldConfigPanel
+        field={currentField}
+        allFields={[priorField, currentField]}
+        dispatch={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText(/Syarat Tampil/i)[0]).toBeDefined();
+    expect(screen.getByLabelText(/Aktifkan syarat tampil/i)).toBeInTheDocument();
+  });
+
+  it('does not render conditional logic section when no prior fields exist', () => {
+    const firstField: FormField = { key: 'f_1', type: 'text', label: 'First Field' };
+
+    render(
+      <FieldConfigPanel
+        field={firstField}
+        allFields={[firstField]}
+        dispatch={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/Syarat Tampil/i)).not.toBeInTheDocument();
+  });
+
+  it('enabling conditional logic and selecting trigger field, operator, and value dispatches UPDATE_FIELD action with updated field.logic', () => {
+    const dispatch = vi.fn();
+    const priorField1: FormField = { key: 'f_1', type: 'choice', label: 'Status', options: ['Aktif', 'Nonaktif'] };
+    const priorField2: FormField = { key: 'f_2', type: 'text', label: 'Alasan' };
+    const currentField: FormField = { key: 'f_3', type: 'text', label: 'Detail Lanjutan', required: false };
+
+    render(
+      <FieldConfigPanel
+        field={currentField}
+        allFields={[priorField1, priorField2, currentField]}
+        dispatch={dispatch}
+      />
+    );
+
+    const enableCheckbox = screen.getByLabelText(/Aktifkan syarat tampil/i);
+    expect(enableCheckbox).not.toBeChecked();
+
+    // Enable conditional logic
+    fireEvent.click(enableCheckbox);
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UPDATE_FIELD',
+        payload: expect.objectContaining({
+          key: 'f_3',
+          field: expect.objectContaining({
+            logic: expect.objectContaining({
+              showIf: expect.objectContaining({
+                field: 'f_1',
+                op: 'equals',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+
+    // Select different trigger field (f_2)
+    const triggerSelect = screen.getByLabelText(/Field Pemicu/i);
+    fireEvent.change(triggerSelect, { target: { value: 'f_2' } });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UPDATE_FIELD',
+        payload: expect.objectContaining({
+          key: 'f_3',
+          field: expect.objectContaining({
+            logic: expect.objectContaining({
+              showIf: expect.objectContaining({
+                field: 'f_2',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+
+    // Select operator (not_equals)
+    const opSelect = screen.getByLabelText(/Operator/i);
+    fireEvent.change(opSelect, { target: { value: 'not_equals' } });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UPDATE_FIELD',
+        payload: expect.objectContaining({
+          key: 'f_3',
+          field: expect.objectContaining({
+            logic: expect.objectContaining({
+              showIf: expect.objectContaining({
+                op: 'not_equals',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+
+    // Enter value
+    const valueInput = screen.getByLabelText(/Nilai Acuan/i);
+    fireEvent.change(valueInput, { target: { value: 'Spesial' } });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UPDATE_FIELD',
+        payload: expect.objectContaining({
+          key: 'f_3',
+          field: expect.objectContaining({
+            logic: {
+              showIf: {
+                field: 'f_2',
+                op: 'not_equals',
+                value: 'Spesial',
+              },
+            },
+          }),
+        }),
+      })
+    );
+  });
+
+  it('disabling conditional logic removes field.logic', () => {
+    const dispatch = vi.fn();
+    const priorField: FormField = { key: 'f_1', type: 'choice', label: 'Status', options: ['A', 'B'] };
+    const currentField: FormField = {
+      key: 'f_2',
+      type: 'text',
+      label: 'Detail',
+      required: false,
+      logic: {
+        showIf: {
+          field: 'f_1',
+          op: 'equals',
+          value: 'A',
+        },
+      },
+    };
+
+    render(
+      <FieldConfigPanel
+        field={currentField}
+        allFields={[priorField, currentField]}
+        dispatch={dispatch}
+      />
+    );
+
+    const enableCheckbox = screen.getByLabelText(/Aktifkan syarat tampil/i);
+    expect(enableCheckbox).toBeChecked();
+
+    fireEvent.click(enableCheckbox);
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UPDATE_FIELD',
+        payload: expect.objectContaining({
+          key: 'f_2',
+          field: expect.objectContaining({
+            logic: undefined,
+          }),
+        }),
+      })
+    );
+  });
+
+  it('hides value input when operator is filled or empty', () => {
+    const dispatch = vi.fn();
+    const priorField: FormField = { key: 'f_1', type: 'text', label: 'Status' };
+    const currentField: FormField = {
+      key: 'f_2',
+      type: 'text',
+      label: 'Detail',
+      logic: {
+        showIf: {
+          field: 'f_1',
+          op: 'filled',
+        },
+      },
+    };
+
+    render(
+      <FieldConfigPanel
+        field={currentField}
+        allFields={[priorField, currentField]}
+        dispatch={dispatch}
+      />
+    );
+
+    expect(screen.queryByLabelText(/Nilai Acuan/i)).not.toBeInTheDocument();
   });
 });

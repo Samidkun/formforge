@@ -6,7 +6,7 @@ import { FieldPalette } from './FieldPalette';
 import { BuilderCanvas } from './BuilderCanvas';
 import { FieldConfigPanel } from './FieldConfigPanel';
 import { canAddField, nextFieldKey } from '../schema';
-import type { Schema, SchemaAction } from '../types';
+import type { Field, Schema, SchemaAction } from '../types';
 import type { SaveStatus } from '../hooks/useFormBuilder';
 
 interface BuilderViewProps {
@@ -173,8 +173,22 @@ export function BuilderView({
         />
         <FieldConfigPanel
           selectedField={selectedField}
+          allFields={schema.fields}
           onUpdate={(key, patch) => dispatch({ type: 'update_field', key, patch })}
           onSetOptions={(key, options) => dispatch({ type: 'set_options', key, options })}
+          dispatch={(action) => {
+            if (action.type === 'UPDATE_FIELD' && 'payload' in action) {
+              const payload = action.payload as { key: string; field: Field };
+              dispatch({
+                type: 'replace',
+                schema: {
+                  fields: schema.fields.map((f) =>
+                    f.key === payload.key ? { ...f, ...payload.field } : f
+                  ),
+                },
+              });
+            }
+          }}
         />
       </div>
     </div>
