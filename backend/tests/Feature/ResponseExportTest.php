@@ -73,4 +73,22 @@ class ResponseExportTest extends TestCase
         $this->assertSame('Budi Santoso', $lines[1][5]);
         $this->assertSame('budi@example.com', $lines[1][6]);
     }
+
+    public function test_export_forbidden_for_other_users_form(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $workspace = Workspace::create(['owner_id' => $user->id, 'name' => 'W1']);
+
+        $form = Form::create([
+            'workspace_id' => $workspace->id,
+            'title' => 'Secret Form',
+            'slug' => 'secret-form',
+            'status' => 'published',
+        ]);
+
+        Sanctum::actingAs($otherUser);
+        $response = $this->get("/api/forms/{$form->id}/responses/export");
+        $response->assertStatus(403);
+    }
 }
