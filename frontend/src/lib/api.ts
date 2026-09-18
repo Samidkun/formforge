@@ -22,6 +22,11 @@ export interface PublishResult {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
+export function authHeaders(token?: string): Record<string, string> {
+  const resolved = token || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null);
+  return resolved ? { Authorization: `Bearer ${resolved}` } : {};
+}
+
 export async function fetchForm(id: string, token?: string): Promise<FormDetail> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -84,3 +89,43 @@ export async function publishForm(
 
   return json;
 }
+
+export async function getResponses(
+  formId: string,
+  status?: string,
+  page: number = 1,
+  token?: string
+): Promise<{ data: { items: any[] }; meta: { total: number; current_page: number; last_page: number; per_page: number } }> {
+  const params = new URLSearchParams();
+  if (status && status !== 'all') params.set('status', status);
+  if (page > 1) params.set('page', String(page));
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetch(`${API_BASE}/api/forms/${formId}/responses${query}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(token),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'Failed to fetch responses');
+  }
+  return res.json();
+}
+
+export function exportResponsesUrl(formId: string, token?: string): string {
+  const resolvedToken = token !== undefined ? token : (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '');
+  return `${API_BASE}/api/forms/${formId}/responses/export?token=${resolvedToken || ''}`;
+}
+
+export const api = {
+  fetchForm,
+  getForm: fetchForm,
+  saveDraft,
+  publishForm,
+  getResponses,
+  exportResponsesUrl,
+};
+
+export default api;

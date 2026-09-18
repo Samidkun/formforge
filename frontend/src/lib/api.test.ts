@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchForm, saveDraft, publishForm } from './api';
+import { fetchForm, saveDraft, publishForm, api } from './api';
 
 describe('API Client — fetchForm & saveDraft', () => {
   beforeEach(() => {
@@ -187,5 +187,91 @@ describe('API Client — fetchForm & saveDraft', () => {
     );
 
     await expect(publishForm('f-1')).rejects.toThrow(/Cannot publish form with zero fields/);
+  });
+
+  it('fetches form responses list with pagination', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { items: [{ id: 'sub-1', status: 'complete' }] },
+          meta: { total: 1, current_page: 1, last_page: 1 },
+        }),
+      })
+    );
+
+    const res = await api.getResponses('form-1', 'complete', 1);
+    expect(res.data.items.length).toBe(1);
+    expect(res.meta.total).toBe(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/form-1/responses?status=complete'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      })
+    );
+  });
+
+  it('fetches form responses with page parameter when page > 1', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { items: [] },
+          meta: { total: 0, current_page: 2, last_page: 2, per_page: 25 },
+        }),
+      })
+    );
+
+    await api.getResponses('form-1', 'all', 2);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/forms/form-1/responses?page=2'),
+      expect.anything()
+    );
+  });
+
+  it('getResponses throws error when server returns error response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          success: false,
+          error: { message: 'Forbidden access to form responses' },
+        }),
+      })
+    );
+
+    await expect(api.getResponses('form-1')).rejects.toThrow(/Forbidden access to form responses/);
+  });
+
+  it('generates export CSV URL with auth token parameter or direct link', () => {
+    const url = api.exportResponsesUrl('form-1');
+    expect(url).toContain('/api/forms/form-1/responses/export');
+  });
+
+  it('exportResponsesUrl includes auth token if present in localStorage', () => {
+    const originalLocalStorage = global.localStorage;
+    const getItemMock = vi.fn().mockReturnValue('test-token-12345');
+    Object.defineProperty(global, 'localStorage', {
+      value: { getItem: getItemMock },
+      configurable: true,
+      writable: true,
+    });
+
+    const url = api.exportResponsesUrl('form-1');
+    expect(url).toContain('/api/forms/form-1/responses/export?token=test-token-12345');
+
+    Object.defineProperty(global, 'localStorage', {
+      value: originalLocalStorage,
+      configurable: true,
+      writable: true,
+    });
   });
 });
