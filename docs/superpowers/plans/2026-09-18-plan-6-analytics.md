@@ -375,7 +375,7 @@ git commit -m "feat(frontend): add analytics API client and instrument panel das
 - Produces: Route `/forms/[id]/analytics` loading and displaying `AnalyticsDashboard`.
 - Navigation tabs updated across all 3 form views (`Builder` | `Responses` | `Analytics`).
 
-- [ ] **Step 1: Write failing page test for `/forms/[id]/analytics`**
+- [x] **Step 1: Write failing page test for `/forms/[id]/analytics`**
 
 In `frontend/src/app/forms/[id]/analytics/page.test.tsx`:
 - Test renders form title and navigation tabs (`Builder`, `Responses`, `Analytics`).
@@ -383,12 +383,12 @@ In `frontend/src/app/forms/[id]/analytics/page.test.tsx`:
 - Test renders dashboard with metrics upon successful fetch.
 - Test renders error state if API fails.
 
-- [ ] **Step 2: Run test to confirm failure**
+- [x] **Step 2: Run test to confirm failure**
 
 Run: `cd frontend && npm test src/app/forms/[id]/analytics/page.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `/forms/[id]/analytics/page.tsx` and update tab navigation**
+- [x] **Step 3: Implement `/forms/[id]/analytics/page.tsx` and update tab navigation**
 
 1. In `frontend/src/app/forms/[id]/analytics/page.tsx`:
    - Extract `id` from params.
@@ -400,17 +400,17 @@ Expected: FAIL.
 3. In `frontend/src/app/forms/[id]/responses/page.tsx`:
    - Add `<Link href="/forms/:id/analytics">Analytics</Link>` in navigation tabs.
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/app/forms/[id]/analytics/ frontend/src/builder/components/BuilderView.tsx frontend/src/app/forms/[id]/responses/page.tsx
