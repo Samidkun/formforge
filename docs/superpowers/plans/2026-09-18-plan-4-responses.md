@@ -452,7 +452,7 @@ git commit -m "feat(backend): add streaming CSV export for form responses"
   - `api.getResponses(formId, status?, page?)`
   - `api.exportResponsesUrl(formId)`
 
-- [ ] **Step 1: Write failing tests for response API methods**
+- [x] **Step 1: Write failing tests for response API methods**
 
 In `frontend/src/lib/api.test.ts`:
 ```ts
@@ -477,12 +477,12 @@ In `frontend/src/lib/api.test.ts`:
   })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npm test src/lib/api.test.ts`
 Expected: FAIL (`getResponses` is not a function).
 
-- [ ] **Step 3: Implement methods in api.ts**
+- [x] **Step 3: Implement methods in api.ts**
 
 Add in `frontend/src/lib/api.ts`:
 ```ts
@@ -515,12 +515,12 @@ Add in `frontend/src/lib/api.ts`:
   }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd frontend && npm test src/lib/api.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/lib/api.ts frontend/src/lib/api.test.ts
