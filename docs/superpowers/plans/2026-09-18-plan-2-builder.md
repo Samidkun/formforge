@@ -322,7 +322,7 @@ git commit -m "feat(backend): add forms table, Form model and slug generator"
   - `DELETE /api/forms/{id}` → `200 {success:true, data:{deleted:true}, meta:{}}`
   - Semua butuh `auth:sanctum`. Bukan pemilik → `403` envelope. Bukan milik siapa pun/tidak ada → `404`. `draft_schema` tidak valid → `422` envelope `error.code = INVALID_SCHEMA`.
 
-- [ ] **Step 1: Tulis test API yang gagal**
+- [x] **Step 1: Tulis test API yang gagal**
 
 ```php
 <?php
@@ -501,12 +501,12 @@ class FormApiTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan GAGAL**
+- [x] **Step 2: Jalankan test, pastikan GAGAL**
 
 Run: `cd backend && php artisan test --filter=FormApiTest`
 Expected: FAIL — semua 404 (route belum ada).
 
-- [ ] **Step 3: Tulis Policy**
+- [x] **Step 3: Tulis Policy**
 
 ```php
 <?php
@@ -529,7 +529,7 @@ class FormPolicy
 }
 ```
 
-- [ ] **Step 4: Tulis FormRequest**
+- [x] **Step 4: Tulis FormRequest**
 
 ```php
 <?php
@@ -570,7 +570,7 @@ class UpdateFormRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 5: Tulis controller**
+- [x] **Step 5: Tulis controller**
 
 ```php
 <?php
@@ -675,7 +675,7 @@ class FormController extends Controller
 }
 ```
 
-- [ ] **Step 6: Daftarkan route**
+- [x] **Step 6: Daftarkan route**
 
 Tambahkan ke `backend/routes/api.php` (import di atas: `use App\Http\Controllers\Api\FormController;`):
 
@@ -692,17 +692,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Hapus baris `Route::middleware('auth:sanctum')->get('/me', ...)` yang lama (sudah pindah ke dalam group).
 
-- [ ] **Step 7: Jalankan test, pastikan PASS**
+- [x] **Step 7: Jalankan test, pastikan PASS**
 
 Run: `cd backend && php artisan test --filter=FormApiTest`
 Expected: PASS (13 test).
 
-- [ ] **Step 8: Jalankan seluruh suite backend (regresi Plan 1)**
+- [x] **Step 8: Jalankan seluruh suite backend (regresi Plan 1)**
 
 Run: `cd backend && php artisan test`
 Expected: PASS — 33 test lama + 11 (Task 1) + 13 (Task 2) = **57 test**.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/app/Http/Controllers/Api/FormController.php \
