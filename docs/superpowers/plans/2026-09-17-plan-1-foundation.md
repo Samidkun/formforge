@@ -40,7 +40,7 @@
 - Consumes: —
 - Produces: service `db` (Postgres 18, host port 5433) & `cache` (Redis 7, host port 6380), keduanya punya healthcheck. `scripts/wait-for-db.sh` keluar 0 hanya setelah Postgres menerima koneksi.
 
-- [ ] **Step 1: Tulis file compose**
+- [x] **Step 1: Tulis file compose**
 
 ```yaml
 # docker-compose.yml
@@ -72,7 +72,7 @@ volumes:
   pgdata:
 ```
 
-- [ ] **Step 2: Tulis helper tunggu DB**
+- [x] **Step 2: Tulis helper tunggu DB**
 
 ```bash
 #!/usr/bin/env bash
@@ -97,7 +97,7 @@ else
 fi
 ```
 
-- [ ] **Step 3: Jalankan dan verifikasi (bukti nyata)**
+- [x] **Step 3: Jalankan dan verifikasi (bukti nyata)**
 
 Run:
 ```bash
@@ -109,7 +109,7 @@ docker compose exec -T cache redis-cli ping
 ```
 Expected: `db ready after N attempt(s)` · `PostgreSQL 18.x` · `PONG`
 
-- [ ] **Step 4: Tambahkan kredensial ke `.env.example`**
+- [x] **Step 4: Tambahkan kredensial ke `.env.example`**
 
 ```
 # Docker Compose dev (lihat docker-compose.yml)
@@ -124,7 +124,7 @@ REDIS_HOST=127.0.0.1
 REDIS_PORT=6380
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docker-compose.yml scripts/wait-for-db.sh .env.example
@@ -146,7 +146,7 @@ git commit -m "chore: add docker compose for postgres 18 + redis 7"
 - Consumes: service `db` dari Task 1.
 - Produces: endpoint `GET /api/health` → `200 {"success":true,"data":{"db":"ok","cache":"ok"},"meta":{}}`. `HealthController::__invoke()`.
 
-- [ ] **Step 1: Scaffold Laravel (installer — baca output-nya, jangan cuma exit code)**
+- [x] **Step 1: Scaffold Laravel (installer — baca output-nya, jangan cuma exit code)**
 
 Run:
 ```bash
@@ -155,7 +155,7 @@ composer create-project laravel/laravel:^12.0 backend --no-interaction 2>&1 | ta
 ```
 Expected: berakhir dengan "Application ready!" TANPA baris `error`. Kalau ada `error`, berhenti dan baca.
 
-- [ ] **Step 2: Tulis test yang gagal**
+- [x] **Step 2: Tulis test yang gagal**
 
 ```php
 <?php
@@ -177,12 +177,12 @@ class HealthTest extends TestCase
 }
 ```
 
-- [ ] **Step 3: Run, verifikasi GAGAL**
+- [x] **Step 3: Run, verifikasi GAGAL**
 
 Run: `cd backend && php artisan test --filter=HealthTest`
 Expected: FAIL (404, route belum ada).
 
-- [ ] **Step 4: Implementasi minimal**
+- [x] **Step 4: Implementasi minimal**
 
 ```php
 <?php
@@ -217,7 +217,7 @@ use App\Http\Controllers\HealthController;
 Route::get('/health', HealthController::class);
 ```
 
-- [ ] **Step 5: Set `.env` + `phpunit.xml` ke container, install predis, run test**
+- [x] **Step 5: Set `.env` + `phpunit.xml` ke container, install predis, run test**
 
 Ekstensi PHP `redis` dan `sqlite` TIDAK ADA di mesin ini, jadi:
 
@@ -259,7 +259,7 @@ Run: `php artisan test --filter=HealthTest`
 Expected: PASS (assertion hijau). Kalau gagal karena DB, pastikan
 `bash scripts/wait-for-db.sh` sudah dijalankan (Task 1 Step 2 membuat `formforge_test`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend
@@ -284,7 +284,7 @@ git commit -m "feat(backend): scaffold laravel with health endpoint"
   - `FormSchema::fieldKeys(): array` — daftar `f_<n>` berurutan.
   - `FormSchema::validateAnswers(array $answers): array` — mengembalikan array error `['f_1' => 'Wajib diisi']`; array kosong = valid.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```php
 <?php
@@ -485,12 +485,12 @@ class FormSchemaTest extends TestCase
 > hijau); (d) `type` non-string (mis. array) melempar `TypeError`, bukan `InvalidArgumentException`
 > sesuai kontrak. Tiga test baru (total suite 12) + guard `!is_string($f['type'])` di Step 4 menutup keempatnya.
 
-- [ ] **Step 2: Run, verifikasi GAGAL**
+- [x] **Step 2: Run, verifikasi GAGAL**
 
 Run: `cd backend && php artisan test --filter=FormSchemaTest`
 Expected: FAIL — `Class "App\Domain\FormSchema" not found`.
 
-- [ ] **Step 3: Implementasi `FieldType`**
+- [x] **Step 3: Implementasi `FieldType`**
 
 ```php
 <?php
@@ -511,7 +511,7 @@ enum FieldType: string
 }
 ```
 
-- [ ] **Step 4: Implementasi `FormSchema`**
+- [x] **Step 4: Implementasi `FormSchema`**
 
 ```php
 <?php
@@ -597,16 +597,16 @@ class FormSchema
 }
 ```
 
-- [ ] **Step 5: Run, verifikasi PASS**
+- [x] **Step 5: Run, verifikasi PASS**
 
 Run: `cd backend && php artisan test --filter=FormSchemaTest`
 Expected: PASS (8 test).
 
-- [ ] **Step 6: Mutation check (SOP: test yang nggak bisa gagal bukan test)**
+- [x] **Step 6: Mutation check (SOP: test yang nggak bisa gagal bukan test)**
 
 Ubah sementara `$n < 1 || $n > 5` jadi `false`, jalankan ulang → test rating **harus merah**. Kembalikan → hijau.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/app/Domain backend/tests/Unit/FormSchemaTest.php
@@ -627,7 +627,7 @@ git commit -m "feat(backend): add FormSchema value object with validation"
 - Consumes: `users` (bawaan Laravel).
 - Produces: tabel `workspaces(id uuid, owner_id FK users, name, timestamps)`; `Workspace` model dengan relasi `owner()` (belongsTo User) dan `User::workspaces()` (hasMany). UUID v4 via `gen_random_uuid()`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```php
 <?php
@@ -675,12 +675,12 @@ class WorkspaceTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run, verifikasi GAGAL**
+- [x] **Step 2: Run, verifikasi GAGAL**
 
 Run: `cd backend && php artisan test --filter=WorkspaceTest`
 Expected: FAIL — tabel/model belum ada.
 
-- [ ] **Step 3: Migrasi**
+- [x] **Step 3: Migrasi**
 
 ```php
 <?php
@@ -704,7 +704,7 @@ return new class extends Migration {
 };
 ```
 
-- [ ] **Step 4: Model**
+- [x] **Step 4: Model**
 
 ```php
 <?php
@@ -743,7 +743,7 @@ public function workspaces(): \Illuminate\Database\Eloquent\Relations\HasMany
 > jadi tidak ada yang pecah. v7 (time-ordered) justru lebih baik untuk indeks. Kalau v4 ketat
 > diwajibkan, ganti ke `HasVersion4Uuids` — tapi itu **bukan** keputusan default di sini.
 
-- [ ] **Step 5: Jalankan migrasi + test**
+- [x] **Step 5: Jalankan migrasi + test**
 
 Run: `php artisan migrate --force && php artisan test --filter=WorkspaceTest`
 Expected: PASS (3 test).
@@ -754,7 +754,7 @@ Expected: PASS (3 test).
 > data besar). Flaky test merusak sinyal hijau yang jadi fondasi metodologi ini, maka ini diperbaiki
 > (bukan sekadar kosmetik): query eksplisit `->orderBy('created_at')->orderBy('name')`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/database/migrations backend/app/Models
@@ -775,7 +775,7 @@ git commit -m "feat(backend): add workspaces table and model (uuid, owner)"
 - Consumes: `users` (bawaan), `Workspace` (Task 4).
 - Produces: endpoint publik `POST /api/register`, `POST /api/login`; endpoint terproteksi `GET /api/me`. Semua pakai envelope `{success, data|error, meta}`. Register otomatis membuat workspace default bernama `"<nama> Workspace"`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```php
 <?php
@@ -885,12 +885,12 @@ class AuthApiTest extends TestCase
 > Fix: exception handler harus membungkus 401 (dan 403) ke envelope `{success:false, error:{...}, meta:{}}`
 > lewat `bootstrap/app.php` (`withExceptions`), dan test 401 harus meng-assert `success=false`.
 
-- [ ] **Step 2: Run, verifikasi GAGAL**
+- [x] **Step 2: Run, verifikasi GAGAL**
 
 Run: `cd backend && php artisan test --filter=AuthApiTest`
 Expected: FAIL (route 404 / 401 semua).
 
-- [ ] **Step 3: Install Sanctum + migrasi token**
+- [x] **Step 3: Install Sanctum + migrasi token**
 
 Run:
 ```bash
@@ -899,7 +899,7 @@ php artisan install:api --no-interaction 2>&1 | tail -10
 ```
 Expected: Sanctum terpasang, migrasi token dibuat. Baca output — pastikan tidak ada `error`.
 
-- [ ] **Step 4: Request validation**
+- [x] **Step 4: Request validation**
 
 ```php
 <?php
@@ -922,7 +922,7 @@ class RegisterRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 5: Controller**
+- [x] **Step 5: Controller**
 
 ```php
 <?php
@@ -989,12 +989,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
 ```
 
-- [ ] **Step 6: Run, verifikasi PASS**
+- [x] **Step 6: Run, verifikasi PASS**
 
 Run: `cd backend && php artisan test --filter=AuthApiTest`
 Expected: PASS (6 test).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend
@@ -1024,7 +1024,7 @@ git commit -m "feat(backend): add auth api (register/login/me) with sanctum"
 > Fix: deteksi stack harus melihat **subdirektori** (`backend/composer.json`, dst) dan gate php
 > dijalankan dengan `cd backend`. Step di bawah diganti dengan pendekatan monorepo-aware.
 
-- [ ] **Step 1: Perbaiki deteksi stack di `local-ci.sh` (monorepo-aware)**
+- [x] **Step 1: Perbaiki deteksi stack di `local-ci.sh` (monorepo-aware)**
 
 Ganti blok deteksi stack agar mencari di subdirektori, contoh:
 
@@ -1038,7 +1038,7 @@ elif [ -f backend/composer.json ]; then IS_PHP=1; PHP_DIR="backend"; fi
 { [ -f pyproject.toml ] || [ -f requirements.txt ]; } && IS_PY=1
 ```
 
-- [ ] **Step 2: Jalankan gate php dari `PHP_DIR`**
+- [x] **Step 2: Jalankan gate php dari `PHP_DIR`**
 
 ```bash
 if [ "$IS_PHP" = 1 ]; then
@@ -1053,7 +1053,7 @@ fi
 
 > **Catatan:** gate `php:audit` (composer audit) juga harus `cd "$PHP_DIR"`.
 
-- [ ] **Step 3: Samakan `.github/workflows/ci.yml` (job php)**
+- [x] **Step 3: Samakan `.github/workflows/ci.yml` (job php)**
 Job `php` harus: (a) mendeteksi `backend/composer.json` (bukan root), (b) pakai
 `defaults.run.working-directory: backend` (atau `cd backend` di tiap step) supaya `composer install`
 + `php artisan test` benar. Gate list harus tetap sinkron dengan `local-ci.sh` (selftest drift check).
@@ -1086,7 +1086,7 @@ Job `php` harus: (a) mendeteksi `backend/composer.json` (bukan root), (b) pakai
 > Bukti: simulasi `frontend/package.json` → `node=true node_dir=frontend`; `backend/package.json`
 > → `node=false` (benar). Gate tetap ALL GREEN, mutasi tetap MERAH.
 
-- [ ] **Step 4: Jalankan gate penuh + verifikasi**
+- [x] **Step 4: Jalankan gate penuh + verifikasi**
 
 Run:
 ```bash
@@ -1095,13 +1095,13 @@ bash scripts/local-ci.sh --tier t0 --fast
 ```
 Expected: SUMMARY memuat baris **`ok php:test`** (bukan cuma `secrets`), lalu `LOCAL-CI: ALL GREEN`.
 
-- [ ] **Step 5: Mutation check gate (SOP: gate yang nggak bisa gagal itu dekorasi)**
+- [x] **Step 5: Mutation check gate (SOP: gate yang nggak bisa gagal itu dekorasi)**
 
 Rusak sementara satu test (`$this->assertTrue(false);` di backend), jalankan
 `bash scripts/local-ci.sh --tier t0 --fast` → **harus exit 1 dan mencetak `FAIL php:test`**.
 Kembalikan → hijau. Ini bukti gate **bisa merah**.
 
-- [ ] **Step 6: Tutup residual T5 — test 403 envelope (Ruling T6-2)**
+- [x] **Step 6: Tutup residual T5 — test 403 envelope (Ruling T6-2)**
 
 Handler 403 (`AuthorizationException`/`AccessDeniedHttpException`) belum punya test. Tambah
 `test_forbidden_returns_envelope`: buat route uji sementara ATAU pakai `$this->withoutExceptionHandling()`?
@@ -1117,7 +1117,7 @@ Handler 403 (`AuthorizationException`/`AccessDeniedHttpException`) belum punya t
 > dipertahankan sebagai defence-in-depth (kalau mapping framework berubah), bukan karena aktif.
 Kalau dinilai terlalu invasif untuk T0, catat eksplisit sebagai deferred di ledger — jangan diam-diam.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/local-ci.sh .github/workflows/ci.yml
@@ -1128,13 +1128,13 @@ git commit -m "ci: make stack detection monorepo-aware so php gate actually runs
 
 ## Definition of Done — Milestone 1
 
-- [ ] `docker compose up -d` → Postgres 18 + Redis 7 `healthy`
-- [ ] `GET /api/health` → `{db:"ok", cache:"ok"}`
-- [ ] `FormSchema` lulus 8 unit test + mutation check
-- [ ] `Workspace` lulus 3 test (UUID, relasi owner)
-- [ ] Auth API lulus 6 test (register + workspace default, login, me, jalur gagal)
-- [ ] `local-ci.sh --tier t0 --fast` → ALL GREEN, dan terbukti **bisa merah**
-- [ ] Semua commit conventional, tidak ada secret ter-commit
+- [x] `docker compose up -d` → Postgres 18 + Redis 7 `healthy`
+- [x] `GET /api/health` → `{db:"ok", cache:"ok"}`
+- [x] `FormSchema` lulus 8 unit test + mutation check
+- [x] `Workspace` lulus 3 test (UUID, relasi owner)
+- [x] Auth API lulus 6 test (register + workspace default, login, me, jalur gagal)
+- [x] `local-ci.sh --tier t0 --fast` → ALL GREEN, dan terbukti **bisa merah**
+- [x] Semua commit conventional, tidak ada secret ter-commit
 
 ## Batas Plan 1 (dicatat eksplisit, bukan gap diam-diam)
 
