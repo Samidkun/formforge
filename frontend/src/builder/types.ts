@@ -33,4 +33,5 @@ export type SchemaAction =
   | { type: 'move_field'; key: string; toIndex: number }
   | { type: 'update_field'; key: string; patch: Partial<Pick<Field, 'label' | 'required'>> }
   | { type: 'set_options'; key: string; options: string[] }
+  | { type: 'set_logic'; key: string; logic?: FieldLogic }
   | { type: 'replace'; schema: Schema };

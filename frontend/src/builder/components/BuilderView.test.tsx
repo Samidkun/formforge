@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BuilderView } from './BuilderView';
+import { schemaReducer } from '../schema';
 import type { Schema } from '../types';
 
 describe('BuilderView component', () => {
@@ -214,5 +216,52 @@ describe('BuilderView component', () => {
     const responsesLink = screen.getByRole('link', { name: /Responses/i });
     expect(responsesLink).toBeInTheDocument();
     expect(responsesLink).toHaveAttribute('href', '/forms/form-abc/responses');
+  });
+
+  it('meneruskan blok logic dari FieldConfigPanel ke schema state (end-to-end via reducer)', async () => {
+    const user = userEvent.setup();
+
+    // Harness: pakai reducer asli supaya jalur dispatch → schema state benar-benar teruji,
+    // bukan sekadar memastikan sebuah fungsi dipanggil.
+    function Harness() {
+      const [schema, dispatch] = React.useReducer(schemaReducer, {
+        fields: [
+          { key: 'f_1', type: 'choice' as const, label: 'Langganan?', options: ['Ya', 'Tidak'] },
+          { key: 'f_2', type: 'email' as const, label: 'Email' },
+        ],
+      });
+      return (
+        <>
+          <BuilderView schema={schema} dispatch={dispatch} title="Form Logic" />
+          <pre data-testid="schema-json">{JSON.stringify(schema)}</pre>
+        </>
+      );
+    }
+
+    render(<Harness />);
+
+    // Pilih field kedua (f_2) lewat canvas — pakai teks key supaya unik
+    // (label "Email" juga muncul sebagai nama tipe di palet).
+    await user.click(screen.getByText(/·\s*f_2/));
+
+    // Aktifkan syarat tampil.
+    const toggle = await screen.findByLabelText(/Aktifkan syarat tampil/i);
+    await user.click(toggle);
+
+    // Logic harus benar-benar tersimpan di schema state, bukan hilang di tengah jalan.
+    await waitFor(() => {
+      const parsed = JSON.parse(screen.getByTestId('schema-json').textContent || '{}');
+      const f2 = parsed.fields.find((f: { key: string }) => f.key === 'f_2');
+      expect(f2.logic).toBeDefined();
+      expect(f2.logic.showIf.field).toBe('f_1');
+    });
+
+    // Matikan lagi → blok logic harus terhapus sepenuhnya.
+    await user.click(toggle);
+    await waitFor(() => {
+      const parsed = JSON.parse(screen.getByTestId('schema-json').textContent || '{}');
+      const f2 = parsed.fields.find((f: { key: string }) => f.key === 'f_2');
+      expect(f2.logic).toBeUndefined();
+    });
   });
 });

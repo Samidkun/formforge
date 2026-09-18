@@ -66,6 +66,21 @@ export function schemaReducer(state: Schema, action: SchemaAction): Schema {
         ),
       };
 
+    case 'set_logic':
+      return {
+        fields: state.fields.map((f) => {
+          if (f.key !== action.key) return f;
+          // logic undefined = hapus blok logic sepenuhnya (toggle off).
+          const next: Field = { ...f };
+          if (action.logic === undefined) {
+            delete next.logic;
+          } else {
+            next.logic = action.logic;
+          }
+          return next;
+        }),
+      };
+
     case 'replace':
       return { fields: [...action.schema.fields] };
   }

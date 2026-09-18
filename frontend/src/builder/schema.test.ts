@@ -153,6 +153,53 @@ describe('schemaReducer — set_options', () => {
   });
 });
 
+describe('schemaReducer — set_logic', () => {
+  it('menyimpan blok logic pada field yang ditargetkan', () => {
+    const s = schemaReducer(withFields(2), {
+      type: 'set_logic',
+      key: 'f_2',
+      logic: { showIf: { field: 'f_1', op: 'equals', value: 'Yes' } },
+    });
+    expect(s.fields[1].logic).toEqual({ showIf: { field: 'f_1', op: 'equals', value: 'Yes' } });
+    expect(s.fields[0].logic).toBeUndefined();
+  });
+
+  it('logic=undefined menghapus blok logic (toggle off)', () => {
+    const withLogic = schemaReducer(withFields(1), {
+      type: 'set_logic',
+      key: 'f_1',
+      logic: { showIf: { field: 'f_1', op: 'filled' } },
+    });
+    expect(withLogic.fields[0].logic).toBeDefined();
+
+    const s = schemaReducer(withLogic, { type: 'set_logic', key: 'f_1', logic: undefined });
+    expect(s.fields[0].logic).toBeUndefined();
+    expect('logic' in s.fields[0]).toBe(false);
+  });
+
+  it('tidak menyentuh field lain dan tetap immutable', () => {
+    const before = withFields(3);
+    const snapshot = JSON.stringify(before);
+    const s = schemaReducer(before, {
+      type: 'set_logic',
+      key: 'f_2',
+      logic: { showIf: { field: 'f_1', op: 'filled' } },
+    });
+    expect(s).not.toBe(before);
+    expect(JSON.stringify(before)).toBe(snapshot);
+    expect(s.fields[0]).toEqual(before.fields[0]);
+    expect(s.fields[0]).toBe(before.fields[0]); // field lain dipertahankan by-reference (tidak disalin sia-sia)
+    expect(s.fields[1]).not.toBe(before.fields[1]); // field yang diubah = objek baru
+  });
+
+  it('key tidak dikenal = no-op yang tetap immutable', () => {
+    const before = withFields(1);
+    const s = schemaReducer(before, { type: 'set_logic', key: 'tidak_ada', logic: undefined });
+    expect(s.fields).toEqual(before.fields);
+    expect(s).not.toBe(before);
+  });
+});
+
 describe('schemaReducer — replace', () => {
   it('mengganti seluruh schema (dipakai saat memuat draft dari API)', () => {
     const loaded: Schema = { fields: [{ key: 'f_1', type: 'date', label: 'Tanggal' }] };

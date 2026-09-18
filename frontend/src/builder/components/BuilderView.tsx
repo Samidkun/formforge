@@ -179,14 +179,7 @@ export function BuilderView({
           dispatch={(action) => {
             if (action.type === 'UPDATE_FIELD' && 'payload' in action) {
               const payload = action.payload as { key: string; field: Field };
-              dispatch({
-                type: 'replace',
-                schema: {
-                  fields: schema.fields.map((f) =>
-                    f.key === payload.key ? { ...f, ...payload.field } : f
-                  ),
-                },
-              });
+              dispatch({ type: 'set_logic', key: payload.key, logic: payload.field.logic });
             }
           }}
         />
