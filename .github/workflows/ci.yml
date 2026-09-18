@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       node: ${{ steps.check.outputs.node }}
+      node_dir: ${{ steps.check.outputs.node_dir }}
       php: ${{ steps.check.outputs.php }}
       php_dir: ${{ steps.check.outputs.php_dir }}
       python: ${{ steps.check.outputs.python }}
@@ -23,7 +24,21 @@ jobs:
       - name: Detect stacks
         id: check
         run: |
-          if [ -f package.json ]; then echo "node=true" >> "$GITHUB_OUTPUT"; else echo "node=false" >> "$GITHUB_OUTPUT"; fi
+          # Monorepo-aware (same rule as the php axis, ruling T6-1/T6-3): the
+          # node app may live in a subdirectory, and a root-only package.json
+          # check would silently skip the node job once it moves (e.g. the
+          # Plan 2 Next.js builder in frontend/). Scan the conventional layouts.
+          # A package.json sitting next to a composer.json is the PHP app's Vite
+          # asset pipeline, not the node stack, so it is skipped.
+          node_dir=""
+          for d in . frontend web apps/web builder; do
+            if [ -f "$d/package.json" ] && [ ! -f "$d/composer.json" ]; then node_dir="$d"; break; fi
+          done
+          if [ -n "$node_dir" ]; then
+            echo "node=true" >> "$GITHUB_OUTPUT"; echo "node_dir=$node_dir" >> "$GITHUB_OUTPUT"
+          else
+            echo "node=false" >> "$GITHUB_OUTPUT"; echo "node_dir=." >> "$GITHUB_OUTPUT"
+          fi
           if [ -f composer.json ]; then
             echo "php=true" >> "$GITHUB_OUTPUT"; echo "php_dir=." >> "$GITHUB_OUTPUT"
           elif [ -f backend/composer.json ]; then
@@ -47,6 +62,11 @@ jobs:
     needs: detect
     if: needs.detect.outputs.node == 'true'
     runs-on: ubuntu-latest
+    # Monorepo-aware (residual R2): run from the detected node dir (root or a
+    # subdir like frontend/), so the job still works when the app is not at root.
+    defaults:
+      run:
+        working-directory: ${{ needs.detect.outputs.node_dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -135,6 +155,12 @@ jobs:
     needs: [detect, node]
     if: needs.detect.outputs.node == 'true'
     runs-on: ubuntu-latest
+    # Monorepo-aware (residual R2): same detected node dir as the node job.
+    # NOTE: hashFiles() below resolves relative to the workspace root, not
+    # working-directory, so the config paths are prefixed with node_dir.
+    defaults:
+      run:
+        working-directory: ${{ needs.detect.outputs.node_dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -142,10 +168,10 @@ jobs:
       - name: Install
         run: npm ci || npm install
       - name: Performance budget (Lighthouse CI)
-        if: hashFiles('.lighthouserc.json') != ''
+        if: hashFiles(format('{0}/.lighthouserc.json', needs.detect.outputs.node_dir)) != ''
         run: npx --yes @lhci/cli autorun
       - name: Accessibility (axe-core)
-        if: hashFiles('e2e/a11y.spec.ts') != ''
+        if: hashFiles(format('{0}/e2e/a11y.spec.ts', needs.detect.outputs.node_dir)) != ''
         run: npx playwright test e2e/a11y.spec.ts
 
   # Branch protection should require: secret-scan, node, php, python, e2e,

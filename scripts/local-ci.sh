@@ -51,8 +51,13 @@ TIER="$(echo "$TIER" | tr '[:upper:]' '[:lower:]')"
 # (local-ci printed ALL GREEN with 32 tests unrun). Detect composer.json in the
 # root first, else in backend/. PHP_DIR is the directory the php gates run from.
 IS_NODE=0; IS_PHP=0; IS_PY=0
-PHP_DIR="."
-[ -f package.json ] && IS_NODE=1
+NODE_DIR="."; PHP_DIR="."
+# Node detection is monorepo-aware too (same class as the php axis, residual R2):
+# the node app may live in a subdir; a package.json sitting next to a
+# composer.json is the PHP app's Vite asset pipeline, not the node stack.
+for d in . frontend web apps/web builder; do
+  if [ -f "$d/package.json" ] && [ ! -f "$d/composer.json" ]; then IS_NODE=1; NODE_DIR="$d"; break; fi
+done
 if [ -f composer.json ]; then IS_PHP=1; PHP_DIR="."
 elif [ -f backend/composer.json ]; then IS_PHP=1; PHP_DIR="backend"; fi
 { [ -f pyproject.toml ] || [ -f requirements.txt ]; } && IS_PY=1
@@ -80,7 +85,7 @@ gate() { # gate <name> <skip-reason-or-empty> <command...>
 }
 
 have() { command -v "$1" >/dev/null 2>&1; }
-has_npm_script() { [ "$IS_NODE" = 1 ] && grep -q "\"$1\"" package.json 2>/dev/null; }
+has_npm_script() { [ "$IS_NODE" = 1 ] && grep -q "\"$1\"" "$NODE_DIR/package.json" 2>/dev/null; }
 
 printf '================================================================\n'
 printf ' local-ci  (tier=%s%s)\n' "$TIER" "$([ "$FAST" = 1 ] && echo ', fast')"
@@ -108,13 +113,14 @@ fi
 
 # ---------- 2..7. per-stack: lint, typecheck, test, audit, license, build ----------
 if [ "$IS_NODE" = 1 ]; then
-  gate "node:lint"      "$(has_npm_script lint || echo 'no lint script')"       npm run --silent lint
-  gate "node:typecheck" "$(has_npm_script typecheck || echo 'no typecheck script')" npm run --silent typecheck
-  gate "node:test"      "$(has_npm_script test || echo 'no test script')"      npm run --silent test
+  # Run from $NODE_DIR (root, or a subdir in a monorepo) — not always root.
+  gate "node:lint"      "$(has_npm_script lint || echo 'no lint script')"       bash -c "cd '$NODE_DIR' && npm run --silent lint"
+  gate "node:typecheck" "$(has_npm_script typecheck || echo 'no typecheck script')" bash -c "cd '$NODE_DIR' && npm run --silent typecheck"
+  gate "node:test"      "$(has_npm_script test || echo 'no test script')"      bash -c "cd '$NODE_DIR' && npm run --silent test"
   # npm audit needs a lockfile. Without one it exits ENOLOCK — that is the gate
   # being UNABLE to run, not a finding, and reporting it as "FAIL audit" hides
   # which of the two happened. Report the real reason.
-  if [ ! -f package-lock.json ] && [ ! -f npm-shrinkwrap.json ]; then
+  if [ ! -f "$NODE_DIR/package-lock.json" ] && [ ! -f "$NODE_DIR/npm-shrinkwrap.json" ]; then
     RESULTS+=("FAIL  node:audit — no lockfile (npm audit cannot run; commit one)")
     printf '\nFAIL node:audit: no package-lock.json. The gate cannot run without it.\n'
     printf '  Fix: npm i --package-lock-only && git add package-lock.json\n'
@@ -123,10 +129,10 @@ if [ "$IS_NODE" = 1 ]; then
     RESULTS+=("SKIP  node:audit — npm missing")
     printf '\n--- node:audit: SKIP (npm missing) ---\n'
   else
-    gate "node:audit" "" npm audit --audit-level=high
+    gate "node:audit" "" bash -c "cd '$NODE_DIR' && npm audit --audit-level=high"
   fi
-  gate "node:license"   "$(have npx || echo 'npx missing')"                    npx --yes license-checker --production --failOn "GPL;AGPL"
-  gate "node:build"     "$(has_npm_script build || echo 'no build script')"    npm run --silent build
+  gate "node:license"   "$(have npx || echo 'npx missing')"                    bash -c "cd '$NODE_DIR' && npx --yes license-checker --production --failOn 'GPL;AGPL'"
+  gate "node:build"     "$(has_npm_script build || echo 'no build script')"    bash -c "cd '$NODE_DIR' && npm run --silent build"
 fi
 
 if [ "$IS_PHP" = 1 ]; then

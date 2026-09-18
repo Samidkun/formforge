@@ -1054,7 +1054,6 @@ fi
 > **Catatan:** gate `php:audit` (composer audit) juga harus `cd "$PHP_DIR"`.
 
 - [ ] **Step 3: Samakan `.github/workflows/ci.yml` (job php)**
-
 Job `php` harus: (a) mendeteksi `backend/composer.json` (bukan root), (b) pakai
 `defaults.run.working-directory: backend` (atau `cd backend` di tiap step) supaya `composer install`
 + `php artisan test` benar. Gate list harus tetap sinkron dengan `local-ci.sh` (selftest drift check).
@@ -1077,6 +1076,15 @@ Job `php` harus: (a) mendeteksi `backend/composer.json` (bukan root), (b) pakai
 > **Regresi yang dicegah:** tambahkan cek actionlint ke `selftest.sh` (SOP) supaya kelas bug ini
 > ketangkap — selama ini selftest cuma membandingkan **nama** gate di `local-ci.sh` vs `ci.yml`,
 > sehingga bilang "in sync, ALL GREEN" padahal `ci.yml` invalid.
+>
+> **Ruling T6-4 (residual R2 dari review T6 — deteksi node juga monorepo-aware):** review T6
+> menemukan deteksi **node** masih root-only (`ci.yml` + `local-ci.sh`), kelas bug sama dengan T6-1
+> tapi di axis node — laten sampai Plan 2 menaruh builder Next.js di subdir. Diperbaiki sekaligus:
+> `detect` memindai `. frontend web apps/web builder`, dan **`package.json` yang bersebelahan dengan
+> `composer.json` di-skip** (itu pipeline aset Vite milik app PHP, bukan stack node). `node_dir`
+> dipakai sebagai `working-directory` job node + web-quality; di `local-ci.sh` jadi `NODE_DIR`.
+> Bukti: simulasi `frontend/package.json` → `node=true node_dir=frontend`; `backend/package.json`
+> → `node=false` (benar). Gate tetap ALL GREEN, mutasi tetap MERAH.
 
 - [ ] **Step 4: Jalankan gate penuh + verifikasi**
 
@@ -1099,6 +1107,14 @@ Handler 403 (`AuthorizationException`/`AccessDeniedHttpException`) belum punya t
 `test_forbidden_returns_envelope`: buat route uji sementara ATAU pakai `$this->withoutExceptionHandling()`?
 — cara paling bersih: tambah route uji di `routes/api.php` yang melempar `AuthorizationException`
 (di-guard `app()->environment('testing')`) dan assert 403 + `{success:false, error:{code:'FORBIDDEN'}, meta:{}}`.
+
+> **Catatan review T6 (residual R1 — akurasi):** test ini **load-bearing pada handler
+> `AccessDeniedHttpException`**, bukan `AuthorizationException`. `Handler::render()` memanggil
+> `prepareException()` **sebelum** render callback, dan `prepareException` memetakan
+> `AuthorizationException` tanpa status → `AccessDeniedHttpException` (Handler.php:672).
+> Bukti (dijalankan sendiri): hapus callback `AuthorizationException` → test tetap **PASS**;
+> hapus callback `AccessDeniedHttpException` → test **FAIL**. Handler `AuthorizationException`
+> dipertahankan sebagai defence-in-depth (kalau mapping framework berubah), bukan karena aktif.
 Kalau dinilai terlalu invasif untuk T0, catat eksplisit sebagai deferred di ledger — jangan diam-diam.
 
 - [ ] **Step 7: Commit**

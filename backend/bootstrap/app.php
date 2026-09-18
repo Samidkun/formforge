@@ -20,8 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Envelope contract (plan Interfaces + spec 3.4 + ruling T5-2): auth
         // failures must return {success:false, error:{code,message}, meta:{}},
-        // not Laravel's raw {"message":"..."} body. Only these two are handled;
-        // every other exception keeps its normal behavior.
+        // not Laravel's raw {"message":"..."} body. Every other exception keeps
+        // its normal behavior.
+        //
+        // NOTE (review T6, residual R1): the AccessDeniedHttpException handler
+        // below is the LOAD-BEARING one. Handler::render() calls prepareException()
+        // BEFORE render callbacks, and prepareException maps a statusless
+        // AuthorizationException -> AccessDeniedHttpException (Handler.php:672),
+        // so the AuthorizationException callback is shadowed. Verified: deleting it
+        // keeps test_forbidden_returns_envelope GREEN; deleting AccessDeniedHttpException
+        // turns it RED. Kept as a defence-in-depth net should that mapping change.
         $envelope = function (string $code, string $message, int $status) {
             return response()->json([
                 'success' => false,
