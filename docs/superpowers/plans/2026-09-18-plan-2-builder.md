@@ -1930,7 +1930,7 @@ git commit -m "feat(frontend): add drag-drop builder canvas and field config pan
   - `api.saveDraft(id, schema, token?)`: mengirim `{ draft_schema: schema }` via `PATCH /api/forms/{id}`
   - `useFormBuilder(formId, token?)`: hook mengelola fetching draft awal, state form, debounce/manual autosave, state status: `'idle' | 'saving' | 'saved' | 'error'`.
 
-- [ ] **Step 1: Tulis test API client yang gagal**
+- [x] **Step 1: Tulis test API client yang gagal**
 
 ```ts
 // frontend/src/lib/api.test.ts
@@ -1997,12 +1997,12 @@ describe('API Client — fetchForm & saveDraft', () => {
 });
 ```
 
-- [ ] **Step 2: Jalankan test API client, pastikan GAGAL**
+- [x] **Step 2: Jalankan test API client, pastikan GAGAL**
 
 Run: `cd frontend && npx vitest run src/lib/api.test.ts`
 Expected: FAIL — `Cannot find module './api'`.
 
-- [ ] **Step 3: Implementasi API client**
+- [x] **Step 3: Implementasi API client**
 
 ```ts
 // frontend/src/lib/api.ts
@@ -2059,7 +2059,7 @@ export async function saveDraft(id: string, schema: Schema, token?: string): Pro
 }
 ```
 
-- [ ] **Step 4: Tulis test useFormBuilder hook yang gagal**
+- [x] **Step 4: Tulis test useFormBuilder hook yang gagal**
 
 ```tsx
 // frontend/src/builder/hooks/useFormBuilder.test.ts
@@ -2135,7 +2135,7 @@ describe('useFormBuilder hook', () => {
 });
 ```
 
-- [ ] **Step 5: Implementasi useFormBuilder hook**
+- [x] **Step 5: Implementasi useFormBuilder hook**
 
 ```ts
 // frontend/src/builder/hooks/useFormBuilder.ts
@@ -2201,7 +2201,7 @@ export function useFormBuilder(formId: string, token?: string) {
 }
 ```
 
-- [ ] **Step 6: Update BuilderView & Edit Page untuk menggunakan hook dan status save**
+- [x] **Step 6: Update BuilderView & Edit Page untuk menggunakan hook dan status save**
 
 Update `frontend/src/builder/components/BuilderView.tsx`:
 Tambahkan indikator `saveStatus` (Anti-Slop Design Contract states: loading, saved, error, saving):
@@ -2314,12 +2314,12 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
 }
 ```
 
-- [ ] **Step 7: Jalankan test Task 6, pastikan PASS**
+- [x] **Step 7: Jalankan test Task 6, pastikan PASS**
 
 Run: `cd frontend && npx vitest run src/lib/api.test.ts src/builder/hooks/useFormBuilder.test.ts`
 Expected: PASS (Semua test API client dan hook hijau).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/lib/api.ts frontend/src/lib/api.test.ts \
