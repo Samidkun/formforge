@@ -219,7 +219,7 @@ git commit -m "feat(edge): implement event intake and database recording for pub
   - `dropoff`: array of per-field metrics `[{ field_key: string, label: string, interactions: int, dropouts: int, drop_rate: float }]`
   - `daily`: array of daily aggregated views, starts, completes
 
-- [ ] **Step 1: Write failing feature test for analytics endpoint and rollup**
+- [x] **Step 1: Write failing feature test for analytics endpoint and rollup**
 
 In `backend/tests/Feature/AnalyticsApiTest.php`:
 - Authenticated user can view analytics for their form.
@@ -227,12 +227,12 @@ In `backend/tests/Feature/AnalyticsApiTest.php`:
 - Accurately computes funnel counts and completion rates.
 - Accurately calculates field dropouts based on interaction and submission data.
 
-- [ ] **Step 2: Run test to confirm failure**
+- [x] **Step 2: Run test to confirm failure**
 
 Run: `cd backend && php artisan test tests/Feature/AnalyticsApiTest.php`
 Expected: FAIL (route / controller not found).
 
-- [ ] **Step 3: Implement Rollup Job and AnalyticsController**
+- [x] **Step 3: Implement Rollup Job and AnalyticsController**
 
 1. Create `RollupFormAnalyticsJob.php`:
    - Summarizes daily views, starts, completes into `form_daily_stats` using `upsert`.
@@ -244,12 +244,12 @@ Expected: FAIL (route / controller not found).
 3. Register route in `backend/routes/api.php`:
    `Route::get('/forms/{id}/analytics', [AnalyticsController::class, 'show']);`
 
-- [ ] **Step 4: Run backend tests to verify pass**
+- [x] **Step 4: Run backend tests to verify pass**
 
 Run: `cd backend && php artisan test`
 Expected: 80+ tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/Jobs/ backend/app/Http/Controllers/Api/AnalyticsController.php backend/routes/api.php backend/tests/Feature/AnalyticsApiTest.php
