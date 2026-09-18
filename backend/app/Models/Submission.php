@@ -42,4 +42,9 @@ class Submission extends Model
     {
         return $this->hasMany(SubmissionAnswer::class);
     }
+
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(Upload::class);
+    }
 }
