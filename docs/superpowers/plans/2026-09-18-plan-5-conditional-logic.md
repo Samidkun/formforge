@@ -566,7 +566,7 @@ git commit -m "feat(frontend): support real-time conditional field visibility in
 **Interfaces:**
 - Produces: Playwright test verifying conditional logic in public form renderer: selecting trigger option reveals dependent field, and submitting without hidden field succeeds.
 
-- [ ] **Step 1: Write Playwright E2E test for conditional logic**
+- [x] **Step 1: Write Playwright E2E test for conditional logic**
 
 Create `frontend/e2e/conditional-logic.spec.ts`:
 ```ts
@@ -649,7 +649,7 @@ test.describe('Conditional Logic E2E', () => {
 })
 ```
 
-- [ ] **Step 2: Run Playwright tests and Local-CI**
+- [x] **Step 2: Run Playwright tests and Local-CI**
 
 Run: `cd frontend && npx playwright test e2e/conditional-logic.spec.ts`
 Expected: 1 passed.
@@ -657,7 +657,7 @@ Expected: 1 passed.
 Run: `bash scripts/local-ci.sh --tier t0 --fast`
 Expected: ALL GREEN (all 11 gates pass).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add frontend/e2e/conditional-logic.spec.ts
