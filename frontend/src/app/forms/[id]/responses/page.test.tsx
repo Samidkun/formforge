@@ -116,7 +116,14 @@ describe('ResponsesPage', () => {
       meta: { total: 1, current_page: 1, last_page: 1, per_page: 25 },
     } as any);
 
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const fetchSpy = vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      blob: async () => new Blob(['col1,col2\nval1,val2'], { type: 'text/csv' }),
+    }));
+    const createObjectURLMock = vi.fn().mockReturnValue('blob:http://localhost/mock-blob');
+    const revokeObjectURLMock = vi.fn();
+    window.URL.createObjectURL = createObjectURLMock;
+    window.URL.revokeObjectURL = revokeObjectURLMock;
 
     render(<ResponsesPage params={Promise.resolve({ id: 'f-1' })} />);
 
@@ -127,9 +134,10 @@ describe('ResponsesPage', () => {
     const exportBtn = screen.getByRole('button', { name: /Export CSV/i });
     fireEvent.click(exportBtn);
 
-    expect(api.exportResponsesUrl).toHaveBeenCalledWith('f-1');
-    expect(openSpy).toHaveBeenCalledWith('/mock-export-url', '_blank');
-
-    openSpy.mockRestore();
+    await waitFor(() => {
+      expect(api.exportResponsesUrl).toHaveBeenCalledWith('f-1');
+      expect(fetch).toHaveBeenCalledWith('/mock-export-url', expect.any(Object));
+      expect(createObjectURLMock).toHaveBeenCalled();
+    });
   });
 });
