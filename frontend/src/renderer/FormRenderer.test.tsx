@@ -187,4 +187,86 @@ describe('FormRenderer', () => {
     expect(submitBtn).toBeDefined();
     expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
   });
+
+  it('dynamically hides and shows fields based on conditional logic', async () => {
+    const logicSchema = {
+      fields: [
+        { key: 'f_subscribe', type: 'choice', label: 'Subscribe Newsletter?', required: true, options: ['Yes', 'No'] },
+        { key: 'f_email', type: 'email', label: 'Email Address', required: true, logic: { showIf: { field: 'f_subscribe', op: 'equals' as const, value: 'Yes' } } },
+      ],
+    };
+
+    const onSubmit = vi.fn();
+    render(<FormRenderer schema={logicSchema} slug="logic-test" onSubmit={onSubmit} />);
+
+    // Initially f_email should be hidden because f_subscribe is empty
+    expect(screen.queryByLabelText(/Email Address/i)).toBeNull();
+
+    // Select "Yes"
+    const yesOption = screen.getByLabelText('Yes');
+    fireEvent.click(yesOption);
+
+    // f_email should now be visible
+    expect(screen.getByLabelText(/Email Address/i)).toBeDefined();
+
+    // Select "No"
+    const noOption = screen.getByLabelText('No');
+    fireEvent.click(noOption);
+
+    // f_email should disappear again
+    expect(screen.queryByLabelText(/Email Address/i)).toBeNull();
+  });
+
+  it('submits successfully when hidden field is required', async () => {
+    const logicSchema = {
+      fields: [
+        { key: 'f_subscribe', type: 'choice', label: 'Subscribe Newsletter?', required: true, options: ['Yes', 'No'] },
+        { key: 'f_email', type: 'email', label: 'Email Address', required: true, logic: { showIf: { field: 'f_subscribe', op: 'equals' as const, value: 'Yes' } } },
+      ],
+    };
+
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
+    render(<FormRenderer schema={logicSchema} slug="logic-test" onSubmit={onSubmit} />);
+
+    // Select "No"
+    fireEvent.click(screen.getByLabelText('No'));
+
+    // Submit form without email
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith([
+        { field_key: 'f_subscribe', value: 'No' },
+      ]);
+    });
+  });
+
+  it('strips hidden fields from answers payload when submitting if field was previously filled', async () => {
+    const logicSchema = {
+      fields: [
+        { key: 'f_subscribe', type: 'choice', label: 'Subscribe Newsletter?', required: true, options: ['Yes', 'No'] },
+        { key: 'f_email', type: 'email', label: 'Email Address', required: true, logic: { showIf: { field: 'f_subscribe', op: 'equals' as const, value: 'Yes' } } },
+      ],
+    };
+
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
+    render(<FormRenderer schema={logicSchema} slug="logic-test" onSubmit={onSubmit} />);
+
+    // Select "Yes"
+    fireEvent.click(screen.getByLabelText('Yes'));
+    // Enter email
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'alice@example.com' } });
+
+    // Switch to "No" -> email becomes hidden
+    fireEvent.click(screen.getByLabelText('No'));
+
+    // Submit form
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith([
+        { field_key: 'f_subscribe', value: 'No' },
+      ]);
+    });
+  });
 });

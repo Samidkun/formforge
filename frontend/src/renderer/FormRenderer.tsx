@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { isFieldVisible } from '@/builder/logic';
+import type { FieldLogic, FormField } from '@/builder/types';
 
 export interface FieldDefinition {
   key: string;
@@ -8,6 +10,7 @@ export interface FieldDefinition {
   label: string;
   required?: boolean;
   options?: string[];
+  logic?: FieldLogic;
 }
 
 export interface FormSchema {
@@ -63,6 +66,9 @@ export function FormRenderer({
     const newErrors: Record<string, string> = {};
 
     for (const field of schema.fields || []) {
+      if (!isFieldVisible(field as FormField, values)) {
+        continue;
+      }
       const val = values[field.key];
       const isEmpty =
         val === undefined ||
@@ -113,6 +119,9 @@ export function FormRenderer({
 
     const answers: AnswerItem[] = [];
     for (const field of schema.fields || []) {
+      if (!isFieldVisible(field as FormField, values)) {
+        continue;
+      }
       const val = values[field.key];
       if (val !== undefined && val !== null && val !== '') {
         if (Array.isArray(val) && val.length === 0) continue;
@@ -188,8 +197,10 @@ export function FormRenderer({
       )}
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-        {(schema.fields || []).map((field) => {
-          const fieldId = `field_${field.key}`;
+        {(schema.fields || [])
+          .filter((field) => isFieldVisible(field as FormField, values))
+          .map((field) => {
+            const fieldId = `field_${field.key}`;
           const normType = field.type.toLowerCase();
           const hasError = !!errors[field.key];
 
