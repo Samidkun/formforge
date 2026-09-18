@@ -270,7 +270,7 @@ git commit -m "feat(backend): add paginated responses API with status filtering"
 - Consumes: Form schema fields, submissions with answers
 - Produces: `GET /api/forms/{id}/responses/export` streaming CSV with headers `Submission ID, Session ID, Status, Started At, Completed At, [Field Labels...]`
 
-- [ ] **Step 1: Write failing feature test for CSV export**
+- [x] **Step 1: Write failing feature test for CSV export**
 
 Create `backend/tests/Feature/ResponseExportTest.php`:
 ```php
@@ -350,12 +350,12 @@ class ResponseExportTest extends TestCase
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd backend && php artisan test tests/Feature/ResponseExportTest.php`
 Expected: FAIL (404 route not found).
 
-- [ ] **Step 3: Implement export action in ResponseController**
+- [x] **Step 3: Implement export action in ResponseController**
 
 Add `export` method in `backend/app/Http/Controllers/Api/ResponseController.php`:
 ```php
@@ -424,12 +424,12 @@ Add route in `backend/routes/api.php`:
 Route::get('/forms/{id}/responses/export', [ResponseController::class, 'export']);
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd backend && php artisan test tests/Feature/ResponseExportTest.php`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Run all backend tests and commit**
+- [x] **Step 5: Run all backend tests and commit**
 
 Run: `cd backend && php artisan test`
 Expected: 73 passed (160+ assertions).
