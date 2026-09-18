@@ -1,0 +1,190 @@
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { FormRenderer } from './FormRenderer';
+
+describe('FormRenderer', () => {
+  const basicSchema = {
+    fields: [
+      { key: 'f_name', type: 'text', label: 'Full Name', required: true },
+      { key: 'f_email', type: 'email', label: 'Email Address', required: true },
+      { key: 'f_rate', type: 'rating', label: 'Satisfaction', required: false },
+      { key: 'f_choice', type: 'choice', label: 'Plan', required: false, options: ['Free', 'Pro'] },
+    ],
+  };
+
+  const all9TypesSchema = {
+    fields: [
+      { key: 'f_text', type: 'text', label: 'Full Name', required: true },
+      { key: 'f_email', type: 'email', label: 'Email Address', required: true },
+      { key: 'f_number', type: 'number', label: 'Age', required: false },
+      { key: 'f_textarea', type: 'textarea', label: 'Bio', required: false },
+      { key: 'f_choice', type: 'choice', label: 'Role', required: false, options: ['Admin', 'Editor'] },
+      { key: 'f_multi', type: 'multi_choice', label: 'Skills', required: false, options: ['React', 'Go', 'PHP'] },
+      { key: 'f_rating', type: 'rating', label: 'Rating', required: false },
+      { key: 'f_date', type: 'date', label: 'Birth Date', required: false },
+      { key: 'f_file', type: 'file_upload', label: 'Resume', required: false },
+    ],
+  };
+
+  it('renders all fields from schema', () => {
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={vi.fn()} />);
+    expect(screen.getByText('Full Name')).toBeDefined();
+    expect(screen.getByText('Email Address')).toBeDefined();
+    expect(screen.getByText('Satisfaction')).toBeDefined();
+    expect(screen.getByText('Plan')).toBeDefined();
+  });
+
+  it('renders all 9 field types properly', () => {
+    render(<FormRenderer schema={all9TypesSchema} slug="all-types-form" onSubmit={vi.fn()} />);
+    expect(screen.getByLabelText(/Full Name/i)).toBeDefined();
+    expect(screen.getByLabelText(/Email Address/i)).toBeDefined();
+    expect(screen.getByLabelText(/Age/i)).toBeDefined();
+    expect(screen.getByLabelText(/Bio/i)).toBeDefined();
+    expect(screen.getByText('Role')).toBeDefined();
+    expect(screen.getByLabelText('Admin')).toBeDefined();
+    expect(screen.getByLabelText('Editor')).toBeDefined();
+    expect(screen.getByText('Skills')).toBeDefined();
+    expect(screen.getByLabelText('React')).toBeDefined();
+    expect(screen.getByLabelText('Go')).toBeDefined();
+    expect(screen.getByText('Rating')).toBeDefined();
+    expect(screen.getByRole('button', { name: '4' })).toBeDefined();
+    expect(screen.getByLabelText(/Birth Date/i)).toBeDefined();
+    expect(screen.getByLabelText(/Resume/i)).toBeDefined();
+  });
+
+  it('supports alias types long_text and file', () => {
+    const aliasSchema = {
+      fields: [
+        { key: 'f_lt', type: 'long_text', label: 'Long Description', required: false },
+        { key: 'f_fl', type: 'file', label: 'Attachment', required: false },
+      ],
+    };
+    render(<FormRenderer schema={aliasSchema} slug="alias-form" onSubmit={vi.fn()} />);
+    expect(screen.getByLabelText(/Long Description/i)).toBeDefined();
+    expect(screen.getByLabelText(/Attachment/i)).toBeDefined();
+  });
+
+  it('validates required fields before submitting', async () => {
+    const onSubmit = vi.fn();
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} />);
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(submitBtn);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Full Name is required/i)).toBeDefined();
+  });
+
+  it('validates email format before submitting', async () => {
+    const onSubmit = vi.fn();
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Alice' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'not-an-email' } });
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(submitBtn);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Invalid email address format/i)).toBeDefined();
+  });
+
+  it('calls onSubmit with answers when valid', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Alice' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'alice@example.com' } });
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          { field_key: 'f_name', value: 'Alice' },
+          { field_key: 'f_email', value: 'alice@example.com' },
+        ])
+      );
+    });
+  });
+
+  it('handles interactive inputs for choice, multi_choice, rating, date, and file', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
+    render(<FormRenderer schema={all9TypesSchema} slug="all-types-form" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'bob@example.com' } });
+    fireEvent.change(screen.getByLabelText(/Age/i), { target: { value: '30' } });
+    fireEvent.change(screen.getByLabelText(/Bio/i), { target: { value: 'Hello world' } });
+
+    // Choice
+    fireEvent.click(screen.getByLabelText('Admin'));
+
+    // Multi choice
+    fireEvent.click(screen.getByLabelText('React'));
+    fireEvent.click(screen.getByLabelText('Go'));
+
+    // Rating
+    fireEvent.click(screen.getByRole('button', { name: '5' }));
+
+    // Date
+    fireEvent.change(screen.getByLabelText(/Birth Date/i), { target: { value: '1995-05-15' } });
+
+    // File
+    const file = new File(['dummy content'], 'resume.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText(/Resume/i), { target: { files: [file] } });
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          { field_key: 'f_text', value: 'Bob' },
+          { field_key: 'f_email', value: 'bob@example.com' },
+          { field_key: 'f_number', value: 30 },
+          { field_key: 'f_textarea', value: 'Hello world' },
+          { field_key: 'f_choice', value: 'Admin' },
+          { field_key: 'f_multi', value: ['React', 'Go'] },
+          { field_key: 'f_rating', value: 5 },
+          { field_key: 'f_date', value: '1995-05-15' },
+          { field_key: 'f_file', value: 'resume.pdf' },
+        ])
+      );
+    });
+  });
+
+  it('shows success screen after submission', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Alice' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'alice@example.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    expect(await screen.findByText(/Thank You!/i)).toBeDefined();
+    expect(screen.getByText(/Your response has been recorded/i)).toBeDefined();
+  });
+
+  it('displays submission error if onSubmit fails', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Network error during submission'));
+    render(<FormRenderer schema={basicSchema} slug="test-form" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Alice' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'alice@example.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    expect(await screen.findByText(/Network error during submission/i)).toBeDefined();
+  });
+
+  it('shows submitting state and disables submit button', () => {
+    render(<FormRenderer schema={basicSchema} slug="test-form" submitting={true} onSubmit={vi.fn()} />);
+
+    const submitBtn = screen.getByRole('button', { name: /submitting\.\.\./i });
+    expect(submitBtn).toBeDefined();
+    expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
+  });
+});
