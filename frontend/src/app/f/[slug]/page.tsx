@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, use, useEffect, useState } from 'react';
+import { Suspense, use, useEffect, useState, useRef } from 'react';
 import { FormRenderer, type AnswerItem, type FormSchema } from '@/renderer/FormRenderer';
 
 interface PublishedFormData {
@@ -61,6 +61,16 @@ function PublicFormContent({
   const [isNotFound, setIsNotFound] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formData, setFormData] = useState<PublishedFormData | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -135,7 +145,40 @@ function PublicFormContent({
     }).catch(() => {});
   };
 
+  const handleAnswersChange = (answers: AnswerItem[]) => {
+    if (!answers || answers.length === 0) return;
+    setAutosaveStatus('saving');
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(async () => {
+      try {
+        const sessionId = getOrCreateSessionId(slug);
+        const res = await fetch(`${edgeUrl}/f/${slug}/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            status: 'partial',
+            answers,
+          }),
+        });
+        if (res.ok) {
+          setAutosaveStatus('saved');
+        }
+      } catch {
+        // Silently preserve current status on network failure
+      }
+    }, 3000);
+  };
+
   const handleSubmit = async (answers: AnswerItem[]) => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    setAutosaveStatus('idle');
     const sessionId = getOrCreateSessionId(slug);
     const res = await fetch(`${edgeUrl}/f/${slug}/submit`, {
       method: 'POST',
@@ -198,12 +241,29 @@ function PublicFormContent({
     return null;
   }
 
+  const statusBadge = (
+    <>
+      {autosaveStatus === 'saving' && (
+        <span className="inline-flex items-center text-xs font-medium text-[var(--color-accent-warning)]">
+          Menyimpan draf...
+        </span>
+      )}
+      {autosaveStatus === 'saved' && (
+        <span className="inline-flex items-center text-xs font-medium text-[var(--color-accent-success)]">
+          Tersimpan otomatis
+        </span>
+      )}
+    </>
+  );
+
   return (
     <main className="min-h-screen py-12 px-4 sm:px-6">
       <FormRenderer
         schema={formData.schema}
         slug={slug}
         title={formData.title}
+        statusBadge={statusBadge}
+        onChange={handleAnswersChange}
         onSubmit={handleSubmit}
         onEvent={handleEvent}
       />

@@ -485,4 +485,12 @@ describe('FormRenderer', () => {
       expect(await screen.findByText('fallback.pdf')).toBeDefined();
     });
   });
+
+  it('calls onChange with updated answers when fields change', () => {
+    const handleChange = vi.fn();
+    render(<FormRenderer schema={basicSchema} slug="test-form" onChange={handleChange} />);
+    const input = screen.getByLabelText(/Full Name/i);
+    fireEvent.change(input, { target: { value: 'John' } });
+    expect(handleChange).toHaveBeenCalledWith([{ field_key: 'f_name', value: 'John' }]);
+  });
 });

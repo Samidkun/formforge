@@ -34,6 +34,8 @@ export interface FormRendererProps {
   submitError?: string | null;
   onEvent?: (type: string, fieldKey?: string) => void;
   onUploadFile?: (file: File) => Promise<{ id?: string; filename: string; url: string }>;
+  onChange?: (answers: AnswerItem[]) => void;
+  statusBadge?: React.ReactNode;
 }
 
 export function FormRenderer({
@@ -46,6 +48,8 @@ export function FormRenderer({
   submitError: propsSubmitError,
   onEvent,
   onUploadFile,
+  onChange,
+  statusBadge,
 }: FormRendererProps) {
   const [values, setValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,7 +77,24 @@ export function FormRenderer({
 
   const handleFieldChange = (key: string, value: any) => {
     triggerStart();
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [key]: value };
+      if (onChange) {
+        const answers: AnswerItem[] = [];
+        for (const field of schema.fields || []) {
+          if (!isFieldVisible(field as FormField, next)) {
+            continue;
+          }
+          const val = next[field.key];
+          if (val !== undefined && val !== null && val !== '') {
+            if (Array.isArray(val) && val.length === 0) continue;
+            answers.push({ field_key: field.key, value: val });
+          }
+        }
+        onChange(answers);
+      }
+      return next;
+    });
     if (errors[key]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -238,11 +259,14 @@ export function FormRenderer({
 
   return (
     <div className="w-full max-w-xl mx-auto my-8 rounded-lg border border-[var(--color-border-hairline)] bg-[var(--color-surface-primary)] p-6 sm:p-8 shadow-xl">
-      {formTitle && (
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)] mb-2">
-          {formTitle}
-        </h1>
-      )}
+      <div className="flex items-center justify-between gap-4 mb-2">
+        {formTitle ? (
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
+            {formTitle}
+          </h1>
+        ) : <div />}
+        {statusBadge && <div className="shrink-0">{statusBadge}</div>}
+      </div>
       {description && (
         <p className="text-sm text-[var(--color-text-secondary)] mb-6">{description}</p>
       )}

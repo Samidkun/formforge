@@ -200,4 +200,58 @@ describe('PublicFormPage (/f/[slug])', () => {
       );
     });
   });
+
+  it('triggers debounced partial autosave and displays autosave badge', async () => {
+    let partialSubmitPayload: any = null;
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes(`/f/${mockSlug}/submit`)) {
+        const body = JSON.parse(init?.body as string);
+        if (body.status === 'partial') {
+          partialSubmitPayload = body;
+        }
+        return {
+          status: 200,
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: { submission_id: 'sub_partial_1', status: 'partial' },
+          }),
+        } as Response;
+      }
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({ success: true, data: mockFormData }),
+      } as Response;
+    });
+
+    render(<PublicFormPage params={{ slug: mockSlug }} />);
+    expect(await screen.findByText('Contact Us Form')).toBeDefined();
+
+    vi.useFakeTimers();
+
+    const nameInput = screen.getByLabelText(/Name/i);
+    act(() => {
+      fireEvent.change(nameInput, { target: { value: 'Bob' } });
+    });
+
+    // Should show "Menyimpan draf..."
+    expect(screen.getByText('Menyimpan draf...')).toBeDefined();
+
+    // Advance 3 seconds for debounce
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3100);
+    });
+
+    expect(partialSubmitPayload).not.toBeNull();
+    expect(partialSubmitPayload.status).toBe('partial');
+    expect(partialSubmitPayload.answers).toEqual([{ field_key: 'name', value: 'Bob' }]);
+
+    // Should show "Tersimpan otomatis"
+    expect(screen.getByText('Tersimpan otomatis')).toBeDefined();
+
+    vi.useRealTimers();
+  });
 });
