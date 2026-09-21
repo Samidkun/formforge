@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"regexp"
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"formforge/edge/internal/schema"
@@ -57,12 +58,76 @@ type Store interface {
 	RecordEvent(ctx context.Context, event *EventRecord) error
 }
 
+type rateLimiter struct {
+	mu       sync.Mutex
+	requests map[string][]time.Time
+	limit    int
+	window   time.Duration
+}
+
+func newRateLimiter(limit int, window time.Duration) *rateLimiter {
+	return &rateLimiter{
+		requests: make(map[string][]time.Time),
+		limit:    limit,
+		window:   window,
+	}
+}
+
+func (rl *rateLimiter) allow(ip string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-rl.window)
+
+	times, exists := rl.requests[ip]
+	if !exists {
+		rl.requests[ip] = []time.Time{now}
+		return true
+	}
+
+	valid := make([]time.Time, 0, len(times))
+	for _, t := range times {
+		if t.After(cutoff) {
+			valid = append(valid, t)
+		}
+	}
+
+	if len(valid) >= rl.limit {
+		rl.requests[ip] = valid
+		return false
+	}
+
+	valid = append(valid, now)
+	rl.requests[ip] = valid
+	return true
+}
+
+func getClientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[0])
+	}
+	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
+		return strings.TrimSpace(xrip)
+	}
+	ip := r.RemoteAddr
+	if colon := strings.LastIndex(ip, ":"); colon != -1 {
+		ip = ip[:colon]
+	}
+	return ip
+}
+
 type Handler struct {
-	store Store
+	store   Store
+	limiter *rateLimiter
 }
 
 func NewHandler(store Store) *Handler {
-	return &Handler{store: store}
+	return &Handler{
+		store:   store,
+		limiter: newRateLimiter(60, time.Minute),
+	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -154,11 +219,25 @@ func (h *Handler) handleGetForm(w http.ResponseWriter, r *http.Request, slug str
 type submitPayload struct {
 	SessionID string                 `json:"session_id"`
 	Status    string                 `json:"status"`
+	Honeypot  string                 `json:"_ff_hp"`
 	Answers   []schema.Answer        `json:"answers"`
 	Meta      map[string]interface{} `json:"meta"`
 }
 
 func (h *Handler) handleSubmit(w http.ResponseWriter, r *http.Request, slug string) {
+	// Rate Limiting Check
+	ip := getClientIP(r)
+	if h.limiter != nil && !h.limiter.allow(ip) {
+		writeJSON(w, http.StatusTooManyRequests, map[string]interface{}{
+			"success": false,
+			"error": map[string]string{
+				"code":    "RATE_LIMITED",
+				"message": "Too many submission attempts. Please slow down.",
+			},
+		})
+		return
+	}
+
 	form, err := h.store.GetPublishedForm(r.Context(), slug)
 	if errors.Is(err, ErrNotFound) {
 		writeJSON(w, http.StatusNotFound, map[string]interface{}{
@@ -180,6 +259,15 @@ func (h *Handler) handleSubmit(w http.ResponseWriter, r *http.Request, slug stri
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
 			"success": false,
 			"error":   map[string]string{"code": "BAD_REQUEST", "message": "Invalid JSON body."},
+		})
+		return
+	}
+
+	// Honeypot anti-spam check
+	if p.Honeypot != "" {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"error":   map[string]string{"code": "BOT_DETECTED", "message": "Submission rejected as spam."},
 		})
 		return
 	}

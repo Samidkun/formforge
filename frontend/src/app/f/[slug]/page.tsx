@@ -147,6 +147,10 @@ function PublicFormContent({
 
   const handleAnswersChange = (answers: AnswerItem[]) => {
     if (!answers || answers.length === 0) return;
+    const hp = answers.find((a) => a.field_key === '_ff_hp')?.value || '';
+    const cleanAnswers = answers.filter((a) => a.field_key !== '_ff_hp');
+    if (cleanAnswers.length === 0) return;
+
     setAutosaveStatus('saving');
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
@@ -162,7 +166,8 @@ function PublicFormContent({
           body: JSON.stringify({
             session_id: sessionId,
             status: 'partial',
-            answers,
+            _ff_hp: hp,
+            answers: cleanAnswers,
           }),
         });
         if (res.ok) {
@@ -180,6 +185,9 @@ function PublicFormContent({
     }
     setAutosaveStatus('idle');
     const sessionId = getOrCreateSessionId(slug);
+    const hp = answers.find((a) => a.field_key === '_ff_hp')?.value || '';
+    const cleanAnswers = answers.filter((a) => a.field_key !== '_ff_hp');
+
     const res = await fetch(`${edgeUrl}/f/${slug}/submit`, {
       method: 'POST',
       headers: {
@@ -188,7 +196,8 @@ function PublicFormContent({
       body: JSON.stringify({
         session_id: sessionId,
         status: 'complete',
-        answers,
+        _ff_hp: hp,
+        answers: cleanAnswers,
       }),
     });
 

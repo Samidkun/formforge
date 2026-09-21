@@ -281,6 +281,20 @@ export function FormRenderer({
       )}
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+        {/* Anti-spam honeypot (hidden from real users) */}
+        <div aria-hidden="true" style={{ display: 'none', position: 'absolute', left: '-9999px' }}>
+          <label htmlFor="_ff_hp">Leave this field blank</label>
+          <input
+            id="_ff_hp"
+            type="text"
+            name="_ff_hp"
+            tabIndex={-1}
+            autoComplete="off"
+            value={values._ff_hp || ''}
+            onChange={(e) => handleFieldChange('_ff_hp', e.target.value)}
+          />
+        </div>
+
         {(schema.fields || [])
           .filter((field) => isFieldVisible(field as FormField, values))
           .map((field) => {

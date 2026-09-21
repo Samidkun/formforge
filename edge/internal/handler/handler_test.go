@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mockStore struct {
@@ -334,5 +335,78 @@ func TestNotFound_InvalidPath(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestSubmit_Honeypot(t *testing.T) {
+	store := &mockStore{
+		formSlug:   "contact",
+		formTitle:  "Contact",
+		versionID:  "v-1",
+		schemaJSON: `{"fields":[{"key":"f_1","type":"text","label":"Name","required":true}]}`,
+		published:  true,
+	}
+	h := NewHandler(store)
+
+	body := map[string]interface{}{
+		"session_id": "00000000-0000-0000-0000-000000000001",
+		"status":     "complete",
+		"_ff_hp":     "bot-inserted-text",
+		"answers": []map[string]interface{}{
+			{"field_key": "f_1", "value": "SpamBot"},
+		},
+	}
+	b, _ := json.Marshal(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/f/contact/submit", bytes.NewReader(b))
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 Bad Request on honeypot, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestSubmit_RateLimit(t *testing.T) {
+	store := &mockStore{
+		formSlug:   "contact",
+		formTitle:  "Contact",
+		versionID:  "v-1",
+		schemaJSON: `{"fields":[{"key":"f_1","type":"text","label":"Name","required":true}]}`,
+		published:  true,
+	}
+	h := NewHandler(store)
+	// Set very small limit for testing
+	h.limiter = newRateLimiter(2, time.Minute)
+
+	body := map[string]interface{}{
+		"session_id": "00000000-0000-0000-0000-000000000001",
+		"status":     "complete",
+		"answers": []map[string]interface{}{
+			{"field_key": "f_1", "value": "Alice"},
+		},
+	}
+	b, _ := json.Marshal(body)
+
+	// First 2 requests should succeed (200)
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/f/contact/submit", bytes.NewReader(b))
+		req.RemoteAddr = "192.168.1.100:1234"
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Fatalf("request %d expected 200, got %d", i+1, w.Code)
+		}
+	}
+
+	// 3rd request should be blocked by rate limiter (429)
+	req := httptest.NewRequest(http.MethodPost, "/f/contact/submit", bytes.NewReader(b))
+	req.RemoteAddr = "192.168.1.100:1234"
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected 429 Too Many Requests, got %d: %s", w.Code, w.Body.String())
 	}
 }
