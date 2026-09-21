@@ -278,19 +278,19 @@ git commit -m "feat(frontend): add asynchronous file upload integration in FormR
   - Displays "Tersimpan otomatis" (autosaved) or "Menyimpan..." indicator.
   - On submit button: sends `status: 'complete'`.
 
-- [ ] **Step 1: Write failing tests for debounced partial autosave**
+- [x] **Step 1: Write failing tests for debounced partial autosave**
 
 In `frontend/src/app/f/[slug]/page.test.tsx`:
 - Test typing in a field triggers debounced partial submission after 3s.
 - Test autosave status changes to "Tersimpan otomatis".
 - Test final submit sends `status: 'complete'`.
 
-- [ ] **Step 2: Run test to confirm failure**
+- [x] **Step 2: Run test to confirm failure**
 
 Run: `cd frontend && npm test src/app/f/[slug]/page.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement debounced autosave in public form page**
+- [x] **Step 3: Implement debounced autosave in public form page**
 
 - Add `onChange?: (answers: AnswerItem[]) => void` to `FormRenderer`.
 - In `app/f/[slug]/page.tsx`:
@@ -300,17 +300,17 @@ Expected: FAIL.
     - saving: `<span className="text-xs text-[var(--color-accent-warning)]">Menyimpan draf...</span>`
     - saved: `<span className="text-xs text-[var(--color-accent-success)]">Tersimpan otomatis</span>`
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 Run: `cd frontend && npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Run lint and typecheck**
+- [x] **Step 5: Run lint and typecheck**
 
 Run: `cd frontend && npm run lint && npm run typecheck`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/renderer/ frontend/src/app/f/
