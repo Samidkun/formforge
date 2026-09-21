@@ -332,7 +332,7 @@ git commit -m "feat(frontend): implement debounced partial submission autosave e
   - Final submission: clicking submit completes submission successfully.
 - All 11 local-ci gates pass cleanly.
 
-- [ ] **Step 1: Write Playwright E2E test**
+- [x] **Step 1: Write Playwright E2E test**
 
 Create `frontend/e2e/partial-and-upload.spec.ts`:
 - Mock GET `/f/upload-survey`
@@ -343,17 +343,17 @@ Create `frontend/e2e/partial-and-upload.spec.ts`:
 - Select file -> verify upload success
 - Click submit -> verify thank you confirmation
 
-- [ ] **Step 2: Run Playwright test**
+- [x] **Step 2: Run Playwright test**
 
 Run: `cd frontend && npx playwright test e2e/partial-and-upload.spec.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Run full local-ci gate**
+- [x] **Step 3: Run full local-ci gate**
 
 Run: `bash scripts/local-ci.sh --tier t0 --fast`
 Expected: ALL GREEN (11/11 gates pass).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/e2e/partial-and-upload.spec.ts
