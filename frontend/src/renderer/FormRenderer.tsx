@@ -77,29 +77,29 @@ export function FormRenderer({
 
   const handleFieldChange = (key: string, value: any) => {
     triggerStart();
-    setValues((prev) => {
-      const next = { ...prev, [key]: value };
-      if (onChange) {
-        const answers: AnswerItem[] = [];
-        for (const field of schema.fields || []) {
-          if (!isFieldVisible(field as FormField, next)) {
-            continue;
-          }
-          const val = next[field.key];
-          if (val !== undefined && val !== null && val !== '') {
-            if (Array.isArray(val) && val.length === 0) continue;
-            answers.push({ field_key: field.key, value: val });
-          }
+    const next = { ...values, [key]: value };
+    setValues(next);
+
+    if (onChange) {
+      const answers: AnswerItem[] = [];
+      for (const field of schema.fields || []) {
+        if (!isFieldVisible(field as FormField, next)) {
+          continue;
         }
-        onChange(answers);
+        const val = next[field.key];
+        if (val !== undefined && val !== null && val !== '') {
+          if (Array.isArray(val) && val.length === 0) continue;
+          answers.push({ field_key: field.key, value: val });
+        }
       }
-      return next;
-    });
+      onChange(answers);
+    }
+
     if (errors[key]) {
       setErrors((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
+        const nextErr = { ...prev };
+        delete nextErr[key];
+        return nextErr;
       });
     }
   };
