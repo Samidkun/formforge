@@ -20,7 +20,7 @@ jobs:
       python: ${{ steps.check.outputs.python }}
       e2e: ${{ steps.check.outputs.e2e }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Detect stacks
         id: check
         run: |
@@ -52,7 +52,7 @@ jobs:
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - name: Secret scan
         uses: gitleaks/gitleaks-action@v2
@@ -68,7 +68,7 @@ jobs:
       run:
         working-directory: ${{ needs.detect.outputs.node_dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - name: Install
@@ -102,7 +102,7 @@ jobs:
       run:
         working-directory: ${{ needs.detect.outputs.php_dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.3', tools: composer, coverage: none }
       - name: Install
@@ -118,7 +118,7 @@ jobs:
     if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - name: Install
@@ -135,7 +135,7 @@ jobs:
     if: needs.detect.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - name: Install
@@ -162,7 +162,7 @@ jobs:
       run:
         working-directory: ${{ needs.detect.outputs.node_dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - name: Install
