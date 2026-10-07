@@ -2,6 +2,12 @@
 
 > **High-throughput headless form infrastructure & drag-and-drop builder with deep field-level drop-off analytics.**
 
+
+
+<p align="center">
+  <img src="docs/screenshots/preview.png" alt="Application Preview" width="100%" style="border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+</p>
+
 FormForge is a modern three-tier form system designed for developers who need robust, high-volume form ingestion without sacrificing rich visual builder interfaces or deep behavioral analytics.
 
 ---
